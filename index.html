@@ -1152,6 +1152,12 @@ async function delRec(id){
 // ═══ AUTH ═══
 const CRM_USERS=[{email:'justhelpbr@gmail.com',senha:'Just1230@',nome:'JustHelp Admin',role:'Administrador'}];
 
+// Hash simples mas compatível com qualquer caractere
+function hashSenha(s){
+  let h=0;for(let i=0;i<s.length;i++){h=Math.imul(31,h)+s.charCodeAt(i)|0;}
+  return 'jh_'+Math.abs(h).toString(36);
+}
+
 function doLogin(){
   const email=document.getElementById('loginEmail').value.trim().toLowerCase();
   const pass=document.getElementById('loginPass').value;
@@ -1160,18 +1166,33 @@ function doLogin(){
   if(!email||!pass){err.textContent='Preencha e-mail e senha.';return;}
   btn.textContent='Entrando...';btn.disabled=true;err.textContent='';
 
+  // Admin fixo
   const admin=CRM_USERS.find(u=>u.email===email&&u.senha===pass);
-  if(admin){localStorage.setItem('jh_sess',JSON.stringify({email:admin.email,nome:admin.nome,role:admin.role}));currentUser=admin;onLogin(admin);return;}
+  if(admin){
+    const user={email:admin.email,nome:admin.nome,role:'Administrador'};
+    localStorage.setItem('jh_sess',JSON.stringify(user));
+    currentUser=user;onLogin(user);return;
+  }
 
-  // Verifica colaboradores
+  // Colaboradores no Supabase
   (async()=>{
     try{
-      const data=await sb('GET','colaboradores?email=eq.'+encodeURIComponent(email)+'&select=*');
-      if(!data||!data.length)throw new Error('not found');
-      const c=data[0];
-      if(btoa(pass)!==c.senha_hash)throw new Error('wrong');
-      const user={email:c.email,nome:c.nome,role:c.role||'assistente'};
-      localStorage.setItem('jh_sess',JSON.stringify(user));currentUser=user;onLogin(user);
+      if(!SU||!SK) throw new Error('Sem configuração Supabase');
+      const data=await sb('GET','colaboradores?email=eq.'+encodeURIComponent(email)+'&ativo=eq.true&select=*');
+      if(!data||!data.length) throw new Error('not found');
+      const col=data[0];
+      // Tenta novo hash primeiro, depois btoa como fallback para contas antigas
+      const hash=hashSenha(pass);
+      const hashLegacy=btoa(unescape(encodeURIComponent(pass)));
+      if(col.senha_hash!==hash && col.senha_hash!==hashLegacy && col.senha_hash!==btoa(pass)){
+        throw new Error('wrong');
+      }
+      // Normaliza role
+      const roleMap={admin:'Administrador',administrador:'Administrador',advogado:'Advogado',comercial:'Comercial / SDR',assistente:'Assistente Jurídico'};
+      const roleNorm=roleMap[col.role?.toLowerCase()]||col.role||'Assistente Jurídico';
+      const user={email:col.email,nome:col.nome,role:roleNorm};
+      localStorage.setItem('jh_sess',JSON.stringify(user));
+      currentUser=user;onLogin(user);
     }catch(e){
       err.textContent='E-mail ou senha incorretos.';
       btn.textContent='Entrar';btn.disabled=false;
@@ -2025,7 +2046,12 @@ function renderCSdocs(){
 }
 
 // ═══ COLABORADORES ═══
-function isAdmin(){ return currentUser?.role==='Administrador'||currentUser?.role==='admin'||currentUser?.email==='justhelpbr@gmail.com'; }
+function isAdmin(){
+  if(!currentUser) return false;
+  if(currentUser.email==='justhelpbr@gmail.com') return true;
+  const r=(currentUser.role||'').toLowerCase();
+  return r==='administrador'||r==='admin';
+}
 
 async function loadColabs(){
   const grid=document.getElementById('colabGrid');if(!grid)return;
@@ -2066,7 +2092,7 @@ async function criarColab(){
   if(senha.length<6){err.textContent='Senha deve ter pelo menos 6 caracteres.';return;}
   err.textContent='Criando...';
   try{
-    await sb('POST','colaboradores',{nome,email,senha_hash:btoa(senha),role});
+    await sb('POST','colaboradores',{nome,email,senha_hash:hashSenha(senha),role});
     toast('Colaborador criado!','ok');closeColab();loadColabs();
   }catch(e){err.textContent=(e.message.includes('duplicate')||e.message.includes('unique'))?'E-mail já cadastrado.':'Erro: '+e.message;}
 }
@@ -2090,10 +2116,22 @@ function goV(v,btn){
   document.getElementById('pgTtl').textContent=TITLES[v]||v;
   document.getElementById('newLbl').textContent=v==='negocios'?'Criar Negócio':'Novo Lead';
   document.getElementById('btnNew').style.display=['dashboard','leads','negocios','kanban'].includes(v)?'inline-flex':'none';
-  // Permissões por tela
-  if(!isAdmin() && ['recebiveis','inadimplencia','relatorios','log','colaboradores','config'].includes(v)){
-    document.querySelector('#view-'+v+' .rel-wrap, #view-'+v+' > div')?.remove?.();
-    document.getElementById('view-'+v).innerHTML='<div class="empty-st"><div class="ei">🔒</div><div>Acesso restrito</div><div>Somente administradores podem acessar esta área</div></div>';
+  // Permissões por tela — só bloqueia se NÃO for admin E a role está definida (evita bloquear antes do login carregar)
+  const restricted=['recebiveis','inadimplencia','relatorios','log','colaboradores','config'];
+  const viewEl=document.getElementById('view-'+v);
+  if(restricted.includes(v)){
+    const admin=isAdmin();
+    // Remove bloqueio anterior se existir
+    viewEl?.querySelector('.acesso-restrito')?.remove();
+    if(!admin){
+      // Cria overlay de bloqueio sem destruir o HTML original
+      const block=document.createElement('div');
+      block.className='acesso-restrito empty-st';
+      block.style.cssText='position:absolute;inset:0;background:var(--bg);z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px';
+      block.innerHTML='<div class="ei">🔒</div><div style="font-size:.82rem;font-weight:600">Acesso restrito</div><div>Somente administradores podem acessar esta área</div>';
+      if(viewEl){ viewEl.style.position='relative'; viewEl.appendChild(block); }
+      return;
+    }
   }
   document.getElementById('stLeads').style.display=v==='leads'?'flex':'none';
   document.getElementById('stNegs').style.display=v==='negocios'?'flex':'none';
