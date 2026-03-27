@@ -1006,14 +1006,26 @@ function renderAll(){
 // ═══ DASHBOARD ═══
 function renderDash(){
   const now = new Date();
-  const mesCur = now.toISOString().slice(0,7);
-  const mesAnt = new Date(now.getFullYear(), now.getMonth()-1, 1).toISOString().slice(0,7);
-  const nomeMes = now.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
-  const nomeAnt = new Date(now.getFullYear(), now.getMonth()-1, 1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  // Usa horário de Brasília (UTC-3) para não errar o mês
+  const brOffset = -3 * 60;
+  const brNow = new Date(now.getTime() + (brOffset - (-now.getTimezoneOffset())) * 60000);
+  const mesCur = brNow.toISOString().slice(0,7);
+  const mesAntDate = new Date(brNow.getFullYear(), brNow.getMonth()-1, 1);
+  const mesAnt = mesAntDate.toISOString().slice(0,7);
+  const nomeMes = brNow.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  const nomeAnt = mesAntDate.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
 
-  // Filtra por mês
-  const recsMes = recs.filter(r=>(r.created_at||'').startsWith(mesCur));
-  const recsAnt = recs.filter(r=>(r.created_at||'').startsWith(mesAnt));
+  // Converte created_at para horário BR antes de comparar
+  function getMesBR(dateStr){
+    if(!dateStr) return '';
+    const d = new Date(dateStr);
+    const br = new Date(d.getTime() + (brOffset - (-d.getTimezoneOffset())) * 60000);
+    return br.toISOString().slice(0,7);
+  }
+
+  // Filtra por mês em horário BR
+  const recsMes = recs.filter(r=>getMesBR(r.created_at)===mesCur);
+  const recsAnt = recs.filter(r=>getMesBR(r.created_at)===mesAnt);
 
   // KPIs mês atual
   const totalMes = recsMes.length;
@@ -1484,18 +1496,22 @@ function salvarMeta(){
   renderMeta();toast('Meta salva!','ok');
 }
 function renderMeta(){
-  const mes=new Date().toISOString().slice(0,7);
+  const now=new Date();
+  const brOff=-3*60;
+  const brNow=new Date(now.getTime()+(brOff-(-now.getTimezoneOffset()))*60000);
+  const mes=brNow.toISOString().slice(0,7);
+  function getMesBR(ds){if(!ds)return'';const d=new Date(ds);return new Date(d.getTime()+(brOff-(-d.getTimezoneOffset()))*60000).toISOString().slice(0,7);}
   const meta=Number(localStorage.getItem('jh_meta_'+mes)||0);
   const inp=document.getElementById('metaInp');if(inp&&meta)inp.value=meta;
-  const recMes=recs.filter(r=>(r.created_at||'').startsWith(mes)&&r.valor_entrada).reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
+  const recMes=recs.filter(r=>getMesBR(r.created_at)===mes&&r.valor_entrada).reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
   const pct=meta?Math.min(100,Math.round(recMes/meta*100)):0;
   const bar=document.getElementById('metaBar');if(bar)bar.style.width=pct+'%';
   const pctEl=document.getElementById('metaPct');if(pctEl)pctEl.textContent=pct+'%';
   document.getElementById('metaAtual').textContent='R$ '+recMes.toLocaleString('pt-BR')+' alcançado';
   document.getElementById('metaAlvo').textContent='Meta: R$ '+(meta||0).toLocaleString('pt-BR');
-  document.getElementById('metaSub').textContent=new Date().toLocaleDateString('pt-BR',{month:'long',year:'numeric'})+' — '+pct+'% atingido';
+  document.getElementById('metaSub').textContent=brNow.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})+' — '+pct+'% atingido';
   const mm={};
-  recs.forEach(r=>{if(!r.created_at||!r.valor_entrada)return;const m=r.created_at.slice(0,7);mm[m]=(mm[m]||{t:0,c:0});mm[m].t+=Number(r.valor_entrada)||0;mm[m].c++;});
+  recs.forEach(r=>{if(!r.created_at||!r.valor_entrada)return;const m=getMesBR(r.created_at);mm[m]=(mm[m]||{t:0,c:0});mm[m].t+=Number(r.valor_entrada)||0;mm[m].c++;});
   const mc=document.getElementById('mesCards');
   if(mc){
     const sorted=Object.entries(mm).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,6);
