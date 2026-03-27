@@ -433,7 +433,7 @@ tr:hover .td-acts{opacity:1}
           <th onclick="srtBy('fonte')">Fonte</th>
           <th>Elegibilidade</th>
           <th onclick="srtBy('created_at')">Criado em</th>
-          <th>Responsável</th><th></th>
+          <th>Responsável</th><th>Cadastrado por</th><th></th>
         </tr></thead>
         <tbody id="tbL"></tbody>
       </table></div>
@@ -689,6 +689,7 @@ function renderTbl(){
       <td data-label="Elegib.">${r.elegibilidade||'—'}</td>
       <td data-label="Criado">${fd(r.created_at)}</td>
       <td data-label="Resp.">${r.responsavel||'—'}</td>
+      <td data-label="Cadastrado por" style="color:var(--teal);font-size:.72rem">${r.cadastrado_por||'—'}</td>
       <td onclick="event.stopPropagation()"><div class="td-acts">
         <button class="act wa" onclick="openWA('${r.whatsapp||r.telefone}')" title="WhatsApp">${waIco}</button>
         <button class="act" onclick="openEdit('${r.id}')" title="Editar">${editIco}</button>
@@ -793,7 +794,7 @@ async function saveRec(){
   const plano=document.getElementById('fPl')?.value||'';
   const ent=Number(document.getElementById('fEn')?.value)||0;
   const rest=Math.max(0,(PVALS[plano]||0)-ent);
-  const data={nome,telefone:document.getElementById('fT')?.value||'',whatsapp:document.getElementById('fW')?.value||'',fonte:document.getElementById('fFt')?.value||'',elegibilidade:document.getElementById('fEl')?.value||'',status:document.getElementById('fSt')?.value||'Novo Lead',estagio:document.getElementById('fEs')?.value||'Proposta de preco',plano,valor_entrada:ent,valor_restante:rest,responsavel:document.getElementById('fR')?.value||'JustHelp',descricao:document.getElementById('fDesc')?.value||'',notas:editId?(recs.find(r=>r.id===editId)?.notas||[]):[],chamadas:editId?(recs.find(r=>r.id===editId)?.chamadas||[]):[],};
+  const data={nome,telefone:document.getElementById('fT')?.value||'',whatsapp:document.getElementById('fW')?.value||'',fonte:document.getElementById('fFt')?.value||'',elegibilidade:document.getElementById('fEl')?.value||'',status:document.getElementById('fSt')?.value||'Novo Lead',estagio:document.getElementById('fEs')?.value||'Proposta de preco',plano,valor_entrada:ent,valor_restante:rest,responsavel:document.getElementById('fR')?.value||'JustHelp',descricao:document.getElementById('fDesc')?.value||'',notas:editId?(recs.find(r=>r.id===editId)?.notas||[]):[],chamadas:editId?(recs.find(r=>r.id===editId)?.chamadas||[]):[],cadastrado_por:editId?(recs.find(r=>r.id===editId)?.cadastrado_por||(currentUser?.nome||'JustHelp')):(currentUser?.nome||'JustHelp'),};
   await upsert(data);closeDrawer();renderAll();
 }
 
@@ -827,6 +828,7 @@ function renderDrTab(r,tab){
       <div class="det-item"><div class="det-lbl">Entrada Paga</div><div class="det-val" style="color:var(--green2)">${r.valor_entrada?'R$'+Number(r.valor_entrada).toLocaleString('pt-BR'):'R$0'}</div></div>
       <div class="det-item"><div class="det-lbl">Restante</div><div class="det-val" style="color:var(--red2)">${r.valor_restante?'R$'+Number(r.valor_restante).toLocaleString('pt-BR'):'R$0'}</div></div>
       <div class="det-item"><div class="det-lbl">Criado em</div><div class="det-val">${fd(r.created_at)}</div></div>
+      <div class="det-item"><div class="det-lbl">Cadastrado por</div><div class="det-val" style="color:var(--teal)">${r.cadastrado_por||'JustHelp'}</div></div>
     </div>
     ${r.descricao?`<div style="background:var(--bg3);border-radius:var(--r-sm);padding:12px;margin-bottom:14px;font-size:.78rem;color:var(--text-mid);line-height:1.6">${r.descricao}</div>`:''}
     ${waNum?`<button class="wa-btn" onclick="openWA('${waNum}')">${waIco}Abrir WhatsApp</button>`:''}`;
