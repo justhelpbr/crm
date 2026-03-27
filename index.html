@@ -1067,7 +1067,17 @@ const PLANO_LABELS = {
   'PIX Parcelado 10x R$100':'PIX Parcelado 10x — R$ 100/mês',
   'PIX Parcelado 12x R$83':'PIX Parcelado 12x — R$ 83/mês',
 };
-const RESPS = ['JustHelp','Dr. Daniel','Ademir'];
+let RESPS = ['JustHelp','Dr. Daniel','Ademir'];
+// Carrega colaboradores do Supabase e adiciona ao RESPS
+async function loadResps(){
+  try{
+    const data = await sb('GET','colaboradores?ativo=eq.true&select=nome');
+    if(data&&data.length){
+      const names = data.map(c=>c.nome).filter(Boolean);
+      RESPS = [...new Set(['JustHelp',...names])];
+    }
+  }catch(e){}
+}
 const ECLR = {'Proposta de preco':'#8B5CF6','Negociacao/Revisao':'#D4AF37','Invoice emitida':'#00B4A2','Invoice Paga':'#27AE60','Contrato Enviado':'#E67E22','Aguardando Assinatura Cliente':'#3B82F6','Contrato Assinado':'#2ECC71','Ganho fechado':'#4ADE80','Caso Aprovado':'#86EFAC','Caso Reprovado':'#FC8181','Correcao':'#F472B6','Financeiro':'#FDE047','Enviado':'#60A5FA','Cancelado':'#FC8181','Congelado':'#A1A1AA','Enviado Com Disclaimer':'#FDBA74'};
 const SCLR = {'Novo Lead':'#60A5FA','Em Atendimento':'#86EFAC','Retornar':'#FDE047','Duplicado':'#A1A1AA','Perdeu o Interesse':'#FC8181','Nao Ligar Mais':'#FCA5A5'};
 const FCLR = {'Meta ADS Whatsapp':'#3B82F6','Instagram':'#EC4899','SDR WhatsApp':'#27AE60','Meta Ads':'#D4AF37','Campanha Ademir':'#8B5CF6','Indicação':'#00B4A2','Google Ads':'#E67E22'};
@@ -1211,6 +1221,7 @@ function onLogin(user){
   document.getElementById('sbUname').textContent=name;
   document.getElementById('sbUrole').textContent=user.role||'Assessoria Jurídica';
   addAccessLog('login','Login realizado');
+  loadResps();
   loadData();
 }
 
@@ -1465,7 +1476,11 @@ function selOpts(arr,val){return arr.map(a=>'<option'+(a===val?' selected':'')+'
 function formHtml(r){
   return '<div class="fg-sec">👤 Dados Pessoais</div>'
   +'<div class="fg-2"><div class="fg"><label>Nome Completo *</label><input id="fN" value="'+(r.nome||'')+'" placeholder="Nome completo"></div>'
-  +'<div class="fg"><label>Responsável</label><select id="fR">'+selOpts(RESPS,r.responsavel||'JustHelp')+'</select></div></div>'
+  +'<div class="fg"><label>Responsável</label>'
+  +(isAdmin()
+    ? '<select id="fR">'+selOpts(RESPS,r.responsavel||currentUser?.nome||'JustHelp')+'</select>'
+    : '<input id="fR" value="'+(r.responsavel||currentUser?.nome||'JustHelp')+'" readonly style="background:var(--bg4);color:var(--textdim);cursor:not-allowed">'
+  )+'</div></div>'
   +'<div class="fg-2"><div class="fg"><label>CPF</label><input id="fCPF" value="'+(r.cpf||'')+'" placeholder="000.000.000-00"></div>'
   +'<div class="fg"><label>RG</label><input id="fRG" value="'+(r.rg||'')+'" placeholder="00.000.000-0"></div></div>'
   +'<div class="fg-2"><div class="fg"><label>Data de Nascimento</label><input type="date" id="fDN" value="'+(r.data_nascimento||'')+'"></div>'
@@ -1542,7 +1557,7 @@ async function saveRec(){
     plano,valor_entrada:ent,valor_restante:rest,
     forma_pagamento:document.getElementById('fFpag')?.value||'PIX',
     parcelas:document.getElementById('fParc')?.value||'',
-    responsavel:document.getElementById('fR')?.value||'JustHelp',
+    responsavel:isAdmin()?(document.getElementById('fR')?.value||currentUser?.nome||'JustHelp'):(currentUser?.nome||'JustHelp'),
     descricao:document.getElementById('fDesc')?.value||'',
     proximo_contato:document.getElementById('fPC')?.value||null,
     obs_agenda:document.getElementById('fOA')?.value||'',
