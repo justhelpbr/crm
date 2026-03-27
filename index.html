@@ -972,10 +972,9 @@ async function doLogin(){
 
   // 2. Verifica colaboradores cadastrados no Supabase
   try{
-    const {data,error} = await sb('GET','colaboradores?email=eq.'+encodeURIComponent(email)+'&select=*');
-    if(error||!data||!data.length){ throw new Error('not found'); }
+    const data = await sb('GET','colaboradores?email=eq.'+encodeURIComponent(email)+'&select=*');
+    if(!data||!data.length){ throw new Error('not found'); }
     const colab = data[0];
-    // Verifica senha (armazenada como hash simples btoa)
     if(btoa(pass) !== colab.senha_hash){ throw new Error('wrong pass'); }
     const user = {email:colab.email, nome:colab.nome, role:colab.role||'assistente'};
     localStorage.setItem('jh_session', JSON.stringify(user));
