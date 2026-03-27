@@ -2494,29 +2494,69 @@ function renderRelatorios(){
   const el4=document.getElementById('relFinMes');
   if(!el1) return;
 
-  // Performance por colaborador
-  const cm={};
-  recs.forEach(r=>{
-    const o=r.responsavel||'JustHelp';
-    if(!cm[o]) cm[o]={leads:0,ganhos:0,entradas:0,cancelados:0};
-    cm[o].leads++;
-    if(r.estagio==='Ganho fechado') cm[o].ganhos++;
-    if(['Cancelado','Perdeu o Interesse'].includes(r.estagio||r.status)) cm[o].cancelados++;
-    cm[o].entradas+=Number(r.valor_entrada)||0;
-  });
-  const colabArr=Object.entries(cm).sort((a,b)=>b[1].entradas-a[1].entradas);
-  el1.innerHTML='<div style="display:grid;grid-template-columns:auto 1fr 1fr 1fr 1fr 1fr;gap:6px 12px;align-items:center;font-size:.7rem">'
-    +'<div></div><div style="color:var(--textdim);font-weight:700">Responsável</div><div style="color:var(--textdim);font-weight:700;text-align:center">Leads</div><div style="color:var(--textdim);font-weight:700;text-align:center">Ganhos</div><div style="color:var(--textdim);font-weight:700;text-align:center">Conv.%</div><div style="color:var(--textdim);font-weight:700;text-align:right">Entradas</div>'
-    +colabArr.map(([o,v],i)=>{
-      const rank=['gold','silver','bronze'][i]||'';
-      const conv=v.leads?Math.round(v.ganhos/v.leads*100):0;
-      return '<div class="rel-rank '+rank+'">'+(i+1)+'</div>'
-        +'<div style="font-weight:600">'+o+'</div>'
-        +'<div style="text-align:center">'+v.leads+'</div>'
-        +'<div style="text-align:center;color:var(--green2)">'+v.ganhos+'</div>'
-        +'<div style="text-align:center;color:var(--teal)">'+conv+'%</div>'
-        +'<div style="text-align:right;font-weight:700;color:var(--gold2)">R$ '+v.entradas.toLocaleString('pt-BR')+'</div>';
-    }).join('')+'</div>';
+  // Performance por colaborador — busca do Supabase
+  el1.innerHTML='<div style="font-size:.74rem;color:var(--textdim);text-align:center;padding:14px">Carregando...</div>';
+  (async()=>{
+    let colabs=[];
+    try{
+      const data=await sb('GET','colaboradores?order=nome.asc&select=id,nome,email,role');
+      colabs=data||[];
+    }catch(e){}
+    // Sempre inclui o admin principal
+    const adminPrincipal={nome:'JustHelp Admin',email:'justhelpbr@gmail.com',role:'Administrador'};
+    if(!colabs.find(c=>c.email===adminPrincipal.email)) colabs.unshift(adminPrincipal);
+
+    // Computa métricas por colaborador cruzando com leads (campo responsavel = nome do colaborador)
+    const cm={};
+    colabs.forEach(col=>{
+      cm[col.nome]={nome:col.nome,email:col.email,role:col.role,leads:0,ganhos:0,entradas:0,cancelados:0};
+    });
+    // Também inclui responsáveis dos leads que não têm conta cadastrada
+    recs.forEach(r=>{
+      const o=r.responsavel||'JustHelp';
+      if(!cm[o]) cm[o]={nome:o,email:'',role:'',leads:0,ganhos:0,entradas:0,cancelados:0};
+      cm[o].leads++;
+      if(r.estagio==='Ganho fechado') cm[o].ganhos++;
+      if(['Cancelado','Perdeu o Interesse'].includes(r.estagio||r.status)) cm[o].cancelados++;
+      cm[o].entradas+=Number(r.valor_entrada)||0;
+    });
+
+    const colabArr=Object.values(cm).sort((a,b)=>b.entradas-a.entradas);
+    const ROLE_LBL={Administrador:'Admin',Advogado:'Advogado','Comercial / SDR':'SDR','Assistente Jurídico':'Assistente',admin:'Admin',assistente:'Assistente',comercial:'SDR',advogado:'Advogado'};
+
+    el1.innerHTML=colabArr.length?
+      '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.74rem">'
+      +'<thead><tr style="background:var(--bg3)">'
+      +'<th style="padding:8px 10px;text-align:left;color:var(--textdim);font-weight:700">#</th>'
+      +'<th style="padding:8px 10px;text-align:left;color:var(--textdim);font-weight:700">Colaborador</th>'
+      +'<th style="padding:8px 10px;text-align:left;color:var(--textdim);font-weight:700">Função</th>'
+      +'<th style="padding:8px 10px;text-align:center;color:var(--textdim);font-weight:700">Leads</th>'
+      +'<th style="padding:8px 10px;text-align:center;color:var(--textdim);font-weight:700">Ganhos</th>'
+      +'<th style="padding:8px 10px;text-align:center;color:var(--textdim);font-weight:700">Conv.%</th>'
+      +'<th style="padding:8px 10px;text-align:center;color:var(--textdim);font-weight:700">Cancelados</th>'
+      +'<th style="padding:8px 10px;text-align:right;color:var(--textdim);font-weight:700">Entradas</th>'
+      +'</tr></thead><tbody>'
+      +colabArr.map((v,i)=>{
+        const rank=['gold','silver','bronze'][i]||'';
+        const conv=v.leads?Math.round(v.ganhos/v.leads*100):0;
+        const ini=v.nome.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+        const roleLabel=ROLE_LBL[v.role]||v.role||'—';
+        return '<tr style="border-bottom:1px solid var(--border)">'
+          +'<td style="padding:8px 10px"><div class="rel-rank '+rank+'">'+(i+1)+'</div></td>'
+          +'<td style="padding:8px 10px"><div style="display:flex;align-items:center;gap:8px">'
+          +'<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:800;color:#fff;flex-shrink:0">'+ini+'</div>'
+          +'<div><div style="font-weight:600">'+v.nome+'</div><div style="font-size:.6rem;color:var(--textdim)">'+v.email+'</div></div>'
+          +'</div></td>'
+          +'<td style="padding:8px 10px"><span class="pill '+(v.role==='Administrador'||v.role==='admin'?'p-ganho':'p-novo')+'">'+roleLabel+'</span></td>'
+          +'<td style="padding:8px 10px;text-align:center;font-weight:700">'+v.leads+'</td>'
+          +'<td style="padding:8px 10px;text-align:center;color:var(--green2);font-weight:700">'+v.ganhos+'</td>'
+          +'<td style="padding:8px 10px;text-align:center;color:var(--teal);font-weight:700">'+conv+'%</td>'
+          +'<td style="padding:8px 10px;text-align:center;color:var(--red2);font-weight:700">'+v.cancelados+'</td>'
+          +'<td style="padding:8px 10px;text-align:right;font-family:Montserrat,sans-serif;font-weight:800;color:var(--gold2)">R$ '+v.entradas.toLocaleString('pt-BR')+'</td>'
+          +'</tr>';
+      }).join('')+'</tbody></table></div>'
+      :'<div class="empty-st"><div class="ei">👤</div><div>Nenhum colaborador cadastrado</div></div>';
+  })();
 
   // Ranking fontes
   const fm={};
