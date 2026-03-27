@@ -587,13 +587,95 @@ tr:hover .td-acts{opacity:1}
     <div class="view" id="view-contrato">
       <div class="gv-wrap" style="max-width:680px">
         <div class="gcard">
-          <div class="gcard-ttl">📄 Gerar Contrato Digital</div>
-          <div style="display:flex;gap:8px;margin-bottom:14px">
-            <select class="sel" id="cLead" onchange="prevContrato()" style="flex:1">
-              <option value="">Selecione um lead...</option>
-            </select>
+          <div class="gcard-ttl" style="display:flex;align-items:center;justify-content:space-between">
+            📄 Gerar Contrato Digital
+            <div style="display:flex;gap:6px">
+              <button class="stab active" id="ctab-lead" onclick="setCTab('lead',this)" style="padding:5px 12px;border-radius:var(--rs)">A partir de Lead</button>
+              <button class="stab" id="ctab-novo" onclick="setCTab('novo',this)" style="padding:5px 12px;border-radius:var(--rs)">Novo Contrato</button>
+            </div>
           </div>
-          <div id="cPreview" style="display:none">
+
+          <!-- TAB: A partir de lead -->
+          <div id="ctab-lead-body" style="margin-top:14px">
+            <div style="display:flex;gap:8px;margin-bottom:14px">
+              <select class="sel" id="cLead" onchange="prevContrato()" style="flex:1">
+                <option value="">Selecione um lead...</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- TAB: Novo contrato manual -->
+          <div id="ctab-novo-body" style="display:none;margin-top:14px">
+            <div style="font-size:.62rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--textdim);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">👤 Dados do Cliente</div>
+            <div class="fg-2">
+              <div class="fg"><label>Nome Completo *</label><input id="cnNome" placeholder="Nome completo do cliente"></div>
+              <div class="fg"><label>CPF</label><input id="cnCPF" placeholder="000.000.000-00"></div>
+            </div>
+            <div class="fg-2">
+              <div class="fg"><label>RG</label><input id="cnRG" placeholder="00.000.000-0"></div>
+              <div class="fg"><label>Data de Nascimento</label><input type="date" id="cnDN"></div>
+            </div>
+            <div class="fg-2">
+              <div class="fg"><label>Nacionalidade</label><input id="cnNac" value="Brasileiro(a)"></div>
+              <div class="fg"><label>Estado Civil</label>
+                <select id="cnEC">
+                  <option value="">Não informado</option>
+                  <option>Solteiro(a)</option><option>Casado(a)</option>
+                  <option>Divorciado(a)</option><option>Viúvo(a)</option><option>União Estável</option>
+                </select>
+              </div>
+            </div>
+            <div class="fg-2">
+              <div class="fg"><label>Profissão</label><input id="cnProf" placeholder="Ex: Comerciante"></div>
+              <div class="fg"><label>WhatsApp</label><input id="cnWA" placeholder="(11) 99999-9999"></div>
+            </div>
+            <div class="fg"><label>Endereço</label><input id="cnEndr" placeholder="Rua, número, complemento"></div>
+            <div class="fg-2">
+              <div class="fg"><label>Cidade</label><input id="cnCid" placeholder="Ex: São Paulo"></div>
+              <div class="fg"><label>UF</label>
+                <select id="cnUF"><option value="">UF</option>
+                  <option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option>
+                  <option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option>
+                  <option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option>
+                  <option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+                  <option>RS</option><option>RO</option><option>RR</option><option>SC</option><option selected>SP</option>
+                  <option>SE</option><option>TO</option>
+                </select>
+              </div>
+            </div>
+            <div style="font-size:.62rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--textdim);margin:12px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border)">⚖️ Processo</div>
+            <div class="fg-2">
+              <div class="fg"><label>Negativado em</label>
+                <select id="cnNeg">
+                  <option value="">Selecione...</option>
+                  <option>Serasa</option><option>SCPC</option>
+                  <option>Serasa e SCPC</option><option>Boa Vista</option>
+                  <option>Serasa, SCPC e Boa Vista</option>
+                </select>
+              </div>
+              <div class="fg"><label>Credor Principal</label><input id="cnCred" placeholder="Ex: Banco Itaú"></div>
+            </div>
+            <div style="font-size:.62rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--textdim);margin:12px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border)">💳 Plano e Valores</div>
+            <div class="fg-2">
+              <div class="fg"><label>Plano</label>
+                <select id="cnPlano" onchange="calcCnRestante()">
+                  <option value="">Selecione...</option>
+                  <option value="A Vista R$900">À Vista — R$ 900</option>
+                  <option value="Standard R$500+R$500">Standard — R$ 500 + R$ 500</option>
+                  <option value="Plus R$250+R$1050">Plus — R$ 250 + R$ 1.050</option>
+                </select>
+              </div>
+              <div class="fg"><label>Entrada (R$)</label><input type="number" id="cnEnt" placeholder="0" oninput="calcCnRestante()"></div>
+            </div>
+            <div class="fg-2">
+              <div class="fg"><label>Restante (R$)</label><input type="number" id="cnRest" placeholder="Calculado automaticamente" readonly style="background:var(--bg4);color:var(--textdim)"></div>
+              <div class="fg"><label>Total (R$)</label><input type="number" id="cnTotal" placeholder="Total" readonly style="background:var(--bg4);color:var(--textdim)"></div>
+            </div>
+            <button class="btn-save" style="width:100%;margin-top:4px" onclick="gerarContratoManual()">Gerar Contrato</button>
+          </div>
+
+          <!-- PREVIEW COMPARTILHADO -->
+          <div id="cPreview" style="display:none;margin-top:14px">
             <div class="ctrato-preview" id="cTexto"></div>
             <div style="display:flex;gap:8px;margin-bottom:10px">
               <button class="btn-save" onclick="imprimirContrato()" style="flex:1">🖨️ Imprimir / PDF</button>
@@ -602,7 +684,7 @@ tr:hover .td-acts{opacity:1}
             </div>
             <div id="csStatus" style="font-size:.72rem;color:var(--textdim);text-align:center"></div>
           </div>
-          <div id="cEmpty" style="text-align:center;padding:28px;color:var(--textdim);font-size:.78rem">Selecione um lead para gerar o contrato</div>
+          <div id="cEmpty" style="text-align:center;padding:28px;color:var(--textdim);font-size:.78rem">Selecione um lead ou preencha os dados para gerar o contrato</div>
         </div>
       </div>
     </div>
@@ -799,7 +881,29 @@ async function upsert(data){
       else{data.id=crypto.randomUUID();data.created_at=new Date().toISOString();recs.unshift(data);}
     }
     toast('Salvo!','ok');
-  }catch(e){toast('Erro ao salvar: '+e.message,'err');}
+  }catch(e){
+    // Se erro de coluna inexistente, tenta salvar só campos básicos
+    if(e.message.includes('column') || e.message.includes('does not exist')){
+      toast('Coluna nova não existe no banco. Execute o SQL de configuração!','err');
+      console.error('SQL necessário: ALTER TABLE leads ADD COLUMN ...');
+      // Tenta salvar apenas campos básicos que certamente existem
+      const basic={nome:data.nome,telefone:data.telefone,whatsapp:data.whatsapp,fonte:data.fonte,elegibilidade:data.elegibilidade,status:data.status,estagio:data.estagio,plano:data.plano,valor_entrada:data.valor_entrada,valor_restante:data.valor_restante,responsavel:data.responsavel,descricao:data.descricao,notas:data.notas,chamadas:data.chamadas,cadastrado_por:data.cadastrado_por,updated_at:data.updated_at};
+      try{
+        if(editId){
+          await sb('PATCH','leads?id=eq.'+editId,basic);
+          const i=recs.findIndex(r=>r.id===editId);if(i>-1)recs[i]={...recs[i],...basic};
+        } else {
+          const r=await sb('POST','leads',basic);
+          if(r&&r[0])recs.unshift(r[0]);
+          else{basic.id=crypto.randomUUID();basic.created_at=new Date().toISOString();recs.unshift(basic);}
+        }
+        toast('Salvo (campos básicos). Execute o SQL para habilitar todos os campos!','inf');
+      }catch(e2){toast('Erro ao salvar: '+e2.message,'err');}
+    } else {
+      toast('Erro: '+e.message,'err');
+      console.error('Erro upsert:', e.message);
+    }
+  }
 }
 
 async function delRec(id){
@@ -1374,27 +1478,66 @@ function renderHistorico(){
   el.innerHTML=log.map(h=>'<div class="hist-item"><div class="hist-ico" style="background:'+(bgs[h.tipo]||'var(--bg3)')+'">'+( icos[h.tipo]||'•')+'</div><div class="hist-info"><div class="hist-txt">'+h.texto+'</div><div class="hist-meta">👤 '+h.user+' • 🕐 '+h.date+'</div></div></div>').join('');
 }
 
-// ═══ CONTRATO ═══
-function loadContratoLeads(){
-  const sel=document.getElementById('cLead');if(!sel)return;
-  const prev=sel.value;
-  sel.innerHTML='<option value="">Selecione um lead...</option>';
-  recs.forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=r.nome+(r.plano?' — '+r.plano:' — sem plano');sel.appendChild(o);});
-  if(prev)sel.value=prev;
-  if(!recs.length)sel.innerHTML='<option value="">Nenhum lead cadastrado</option>';
+// ═══ CONTRATO — TABS ═══
+let contratoManualData = null;
+
+function setCTab(tab, btn){
+  document.querySelectorAll('#view-contrato .stab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('ctab-lead-body').style.display = tab==='lead' ? 'block' : 'none';
+  document.getElementById('ctab-novo-body').style.display = tab==='novo' ? 'block' : 'none';
+  document.getElementById('cPreview').style.display = 'none';
+  document.getElementById('cEmpty').style.display = 'block';
+  contratoManualData = null;
 }
 
-function prevContrato(){
-  const id=document.getElementById('cLead')?.value;
-  const prev=document.getElementById('cPreview');
-  const empty=document.getElementById('cEmpty');
-  if(!id){prev.style.display='none';empty.style.display='block';return;}
-  const r=recs.find(x=>x.id===id);if(!r)return;
-  const hoje=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
-  const pv=PVALS[r.plano]||0;const ent=Number(r.valor_entrada)||0;const rest=Number(r.valor_restante)||0;
-  const vExt={'A Vista R$900':'Novecentos reais','Standard R$500+R$500':'Um mil reais','Plus R$250+R$1050':'Um mil e trezentos reais',900:'Novecentos reais',1000:'Um mil reais',1300:'Um mil e trezentos reais',500:'Quinhentos reais',250:'Duzentos e cinquenta reais',1050:'Um mil e cinquenta reais'};
+function calcCnRestante(){
+  const plano = document.getElementById('cnPlano')?.value;
+  const pv = PVALS[plano]||0;
+  const ent = Number(document.getElementById('cnEnt')?.value)||0;
+  const rest = Math.max(0, pv - ent);
+  const ri = document.getElementById('cnRest'); if(ri) ri.value = rest||'';
+  const ti = document.getElementById('cnTotal'); if(ti) ti.value = pv||'';
+}
 
-  const texto='CONTRATO DE HONORÁRIOS ADVOCATÍCIOS\n'
+function gerarContratoManual(){
+  const nome = document.getElementById('cnNome')?.value.trim();
+  if(!nome){ toast('Nome do cliente é obrigatório','err'); return; }
+  const plano = document.getElementById('cnPlano')?.value;
+  if(!plano){ toast('Selecione um plano','err'); return; }
+  const pv = PVALS[plano]||0;
+  const ent = Number(document.getElementById('cnEnt')?.value)||0;
+  const rest = Math.max(0, pv - ent);
+
+  // Monta objeto fake para reutilizar prevContrato
+  contratoManualData = {
+    id: null,
+    nome,
+    cpf: document.getElementById('cnCPF')?.value||'',
+    rg: document.getElementById('cnRG')?.value||'',
+    data_nascimento: document.getElementById('cnDN')?.value||'',
+    nacionalidade: document.getElementById('cnNac')?.value||'Brasileiro(a)',
+    estado_civil: document.getElementById('cnEC')?.value||'',
+    profissao: document.getElementById('cnProf')?.value||'',
+    whatsapp: document.getElementById('cnWA')?.value||'',
+    endereco: document.getElementById('cnEndr')?.value||'',
+    cidade: document.getElementById('cnCid')?.value||'',
+    uf: document.getElementById('cnUF')?.value||'',
+    elegibilidade: document.getElementById('cnNeg')?.value||'',
+    credor: document.getElementById('cnCred')?.value||'',
+    plano, valor_entrada: ent, valor_restante: rest,
+  };
+  gerarTextoContrato(contratoManualData);
+}
+
+function gerarTextoContrato(r){
+  const hoje = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  const pv = PVALS[r.plano]||0;
+  const ent = Number(r.valor_entrada)||0;
+  const rest = Number(r.valor_restante)||0;
+  const vExt = {'A Vista R$900':'Novecentos reais','Standard R$500+R$500':'Um mil reais','Plus R$250+R$1050':'Um mil e trezentos reais',900:'Novecentos reais',1000:'Um mil reais',1300:'Um mil e trezentos reais',500:'Quinhentos reais',250:'Duzentos e cinquenta reais',1050:'Um mil e cinquenta reais'};
+
+  const texto = 'CONTRATO DE HONORÁRIOS ADVOCATÍCIOS\n'
 +'Ação Declaratória de Inexigibilidade de Débito c/c Indenização por Danos Morais\n\n'
 +'━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n'
 +'CONTRATANTE (CLIENTE):\n'
@@ -1406,7 +1549,7 @@ function prevContrato(){
 +'CPF: '+(r.cpf||'não informado')+'\n'
 +'RG: '+(r.rg||'não informado')+'\n'
 +'Endereço: '+(r.endereco||'não informado')+'\n'
-+'Cidade/UF/CEP: '+([r.cidade,r.uf,r.cep].filter(Boolean).join(' / ')||'não informado')+'\n'
++'Cidade/UF: '+([r.cidade,r.uf].filter(Boolean).join('/')||'não informado')+'\n'
 +'WhatsApp: '+(r.whatsapp||r.telefone||'não informado')+'\n\n'
 +'CONTRATADO: JUSTHELP ASSESSORIA LTDA\n'
 +'CNPJ: 65.620.168/0001-45\n'
@@ -1427,22 +1570,17 @@ function prevContrato(){
 +'━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n'
 +'CLÁUSULA 3ª – A CONTRATADA não se responsabiliza por cheques devolvidos.\n\n'
 +'CLÁUSULA 4ª – DAS LIMITAÇÕES\n'
-+'Protestos, processos e débitos não serão quitados; apenas o nome será removido\n'
-+'do SERASA, SPC, BOA VISTA e CENPROT.\n'
++'Apenas o nome será removido do SERASA, SPC, BOA VISTA e CENPROT.\n'
 +'Não inclui remoção de apontamentos no BACEN.\n\n'
-+'CLÁUSULA 5ª – DA NÃO QUITAÇÃO DE DÍVIDAS\n'
-+'O pagamento das dívidas com credores não será realizado.\n\n'
++'CLÁUSULA 5ª – O pagamento das dívidas com credores não será realizado.\n\n'
 +'CLÁUSULA 6ª – OBRIGAÇÕES DO CONTRATADO\n'
-+'I – Dedicação, diligência e ética profissional (OAB);\n'
-+'II – Manter o cliente informado; III – Sigilo profissional;\n'
-+'IV – Comunicar decisões relevantes; V – Relatórios quando solicitado.\n\n'
++'I – Dedicação e ética profissional (OAB); II – Informar o cliente;\n'
++'III – Sigilo profissional; IV – Relatórios quando solicitado.\n\n'
 +'CLÁUSULA 7ª – OBRIGAÇÕES DO CONTRATANTE\n'
 +'I – Fornecer documentos; II – Pagar honorários no prazo;\n'
-+'III – Arcar com despesas processuais; IV – Comunicar alterações de dados em 48h.\n\n'
++'III – Arcar com despesas processuais; IV – Comunicar alterações em 48h.\n\n'
 +'CLÁUSULA 8ª – DA RESCISÃO\n'
-+'Desistência antes do ajuizamento: 30% do valor total.\n'
-+'Desistência após ajuizamento: multa de 40%.\n'
-+'Rescisão unilateral pelo cliente: multa de 50%.\n\n'
++'Antes do ajuizamento: 30% | Após: 40% | Unilateral: 50%\n\n'
 +'CLÁUSULA 9ª – Custas processuais são de responsabilidade do CONTRATANTE.\n\n'
 +'CLÁUSULA 10ª – Sigilo absoluto sobre informações do contrato.\n\n'
 +'CLÁUSULA 11ª – LGPD: dados tratados exclusivamente para fins deste contrato.\n\n'
@@ -1458,20 +1596,31 @@ function prevContrato(){
 +'1ª Testemunha                          2ª Testemunha\n'
 +'CPF:                                   CPF:';
 
-  document.getElementById('cTexto').textContent=texto;
-  document.getElementById('csStatus').textContent='';
-  prev.style.display='block';empty.style.display='none';
-  addHist('contrato','Contrato gerado para <strong>'+r.nome+'</strong>',r.id);
+  document.getElementById('cTexto').textContent = texto;
+  document.getElementById('csStatus').textContent = '';
+  document.getElementById('cPreview').style.display = 'block';
+  document.getElementById('cEmpty').style.display = 'none';
+  if(r.id) addHist('contrato','Contrato gerado para <strong>'+r.nome+'</strong>',r.id);
+  else addHist('contrato','Contrato manual gerado para <strong>'+r.nome+'</strong>');
 }
 
-function imprimirContrato(){
-  const texto=document.getElementById('cTexto')?.textContent;if(!texto)return;
-  const win=window.open('','_blank');
-  const css='*{margin:0;padding:0;box-sizing:border-box}body{font-family:"Times New Roman",serif;font-size:12pt;line-height:1.8;padding:2cm;max-width:21cm;margin:0 auto}.header{text-align:center;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:20px}.header img{height:44px;margin-bottom:6px}.addr{font-size:9pt;color:#555}pre{font-family:"Times New Roman",serif;font-size:11pt;line-height:1.8;white-space:pre-wrap}@media print{body{padding:1.5cm}@page{margin:2cm}}';
-  const logo='https://res.cloudinary.com/dmdaiwkyl/image/upload/v1773170909/LOGO_02_COLOR_1_voxxy3.png';
-  const html='<!DOCTYPE html><html><head><title>Contrato JustHelp<\/title><style>'+css+'<\/style><\/head><body><div class="header"><img src="'+logo+'" alt="JustHelp"><div class="addr">Av. Brigadeiro Faria Lima, 1811, Sala 1119 – São Paulo/SP | CNPJ: 65.620.168\/0001-45<\/div><\/div><pre>'+texto+'<\/pre><\/body><\/html>';
-  win.document.open();win.document.write(html);win.document.close();
-  setTimeout(()=>win.print(),600);
+function loadContratoLeads(){
+  const sel=document.getElementById('cLead');if(!sel)return;
+  const prev=sel.value;
+  sel.innerHTML='<option value="">Selecione um lead...</option>';
+  recs.forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=r.nome+(r.plano?' — '+r.plano:' — sem plano');sel.appendChild(o);});
+  if(prev)sel.value=prev;
+  if(!recs.length)sel.innerHTML='<option value="">Nenhum lead cadastrado</option>';
+}
+
+function prevContrato(){
+  const id=document.getElementById('cLead')?.value;
+  const prev=document.getElementById('cPreview');
+  const empty=document.getElementById('cEmpty');
+  if(!id){prev.style.display='none';empty.style.display='block';return;}
+  const r=recs.find(x=>x.id===id);if(!r)return;
+  contratoManualData=null;
+  gerarTextoContrato(r);
 }
 
 function enviarWA(){
