@@ -373,6 +373,16 @@ tr:hover .td-acts{opacity:1}
 .log-logout{background:rgba(192,57,43,.1)}
 .log-action{background:rgba(59,130,246,.1)}
 
+
+/* COMISSÃO */
+.com-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.com-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.com-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.76rem;font-weight:800;color:#fff;flex-shrink:0}
+.com-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--bg3);border-radius:var(--rs);margin-bottom:5px;font-size:.76rem}
+.com-pago{border-left:3px solid var(--green2)}
+.com-pendente{border-left:3px solid var(--gold2)}
+.com-badge{font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:20px;cursor:pointer;border:none;transition:.15s}
+
 </style>
 </head>
 <body>
@@ -450,6 +460,9 @@ tr:hover .td-acts{opacity:1}
     <button class="sb-btn" onclick="goV('inadimplencia',this)">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Inadimplência
       <span class="sb-badge red" id="sbInad">0</span>
+    </button>
+    <button class="sb-btn" onclick="goV('comissoes',this)">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Comissões
     </button>
     <div class="sb-sec">Relatórios</div>
     <button class="sb-btn" onclick="goV('relatorios',this)">
@@ -856,6 +869,7 @@ CREATE TABLE IF NOT EXISTS leads (
   numero_processo text, data_processo date,
   docs_checklist jsonb DEFAULT '{}',
   parcelas_status jsonb DEFAULT '{}',
+  comissao_status text DEFAULT 'pendente',
   clicksign_key text, clicksign_status text,
   updated_at timestamptz DEFAULT now(),
   created_at timestamptz DEFAULT now()
@@ -958,6 +972,22 @@ CREATE POLICY "pub_c" ON colaboradores FOR ALL USING (true) WITH CHECK (true);</
         <button class="btn-export" style="margin-left:auto" onclick="limparLog()">🗑 Limpar Log</button>
       </div>
       <div style="flex:1;overflow-y:auto;padding:14px" id="logGrid"></div>
+    </div>
+
+
+    <!-- COMISSÕES -->
+    <div class="view" id="view-comissoes">
+      <div style="padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:.74rem;color:var(--textdim)">10% sobre processo pago completo</span>
+        <select class="sel" id="comMes" onchange="renderComissoes()" style="min-width:130px">
+          <option value="">Todos os meses</option>
+        </select>
+        <button class="btn-export" onclick="exportComissoesPDF()">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportar PDF
+        </button>
+        <span style="font-size:.72rem;font-weight:700;color:var(--gold2);margin-left:auto" id="comTotal"></span>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:14px" id="comGrid"></div>
     </div>
 
   </div><!-- /content -->
@@ -1251,6 +1281,7 @@ function renderAll(){
   if(curV==='clicksign')renderCSdocs();
   if(curV==='recebiveis')renderRecebiveis();
   if(curV==='inadimplencia')renderInadimplencia();
+  if(curV==='comissoes')renderComissoes();
   if(curV==='relatorios')renderRelatorios();
   // Update recebíveis and inadimplência badges
   setTimeout(()=>{ renderRecebiveis(); renderInadimplencia(); }, 100);
@@ -1609,6 +1640,7 @@ function renderDrTab(r,tab){
       ['Restante',r.valor_restante?'R$ '+Number(r.valor_restante).toLocaleString('pt-BR'):'R$ 0','var(--red2)'],
       ['Cadastrado por',r.cadastrado_por||'JustHelp','var(--teal)'],
       ['Nº Processo',r.numero_processo||'—'],
+      ['Comissão',r.estagio==='Ganho fechado'&&PVALS[r.plano]?'R$ '+Math.round((PVALS[r.plano]||0)*0.1).toLocaleString('pt-BR')+' — '+(r.comissao_status==='pago'?'✅ Paga':'⏳ Pendente'):'—',r.comissao_status==='pago'?'var(--green2)':'var(--gold2)'],
       ['Data Processo',r.data_processo?new Date(r.data_processo+'T12:00:00').toLocaleDateString('pt-BR'):'—'],
       ['Próx. Contato',r.proximo_contato?new Date(r.proximo_contato+'T12:00:00').toLocaleDateString('pt-BR'):'—'],
       ['Criado em',fd(r.created_at)],
@@ -2119,7 +2151,7 @@ async function delColab(id,email){
 }
 
 // ═══ NAV ═══
-const TITLES={dashboard:'Página Inicial',leads:'Clientes Potenciais',negocios:'Negócios',kanban:'Kanban',agenda:'Agenda',parados:'Leads Parados',meta:'Meta e Receita',funil:'Funil de Conversão',mapa:'Mapa de Leads',historico:'Histórico',contrato:'Contrato Digital',clicksign:'Clicksign',recebiveis:'Recebíveis',inadimplencia:'Inadimplência',relatorios:'Relatórios',log:'Log de Acesso',colaboradores:'Colaboradores',config:'Configurações'};
+const TITLES={dashboard:'Página Inicial',leads:'Clientes Potenciais',negocios:'Negócios',kanban:'Kanban',agenda:'Agenda',parados:'Leads Parados',meta:'Meta e Receita',funil:'Funil de Conversão',mapa:'Mapa de Leads',historico:'Histórico',contrato:'Contrato Digital',clicksign:'Clicksign',recebiveis:'Recebíveis',inadimplencia:'Inadimplência',comissoes:'Comissões',relatorios:'Relatórios',log:'Log de Acesso',colaboradores:'Colaboradores',config:'Configurações'};
 
 function goV(v,btn){
   curV=v;curSub='todos';
@@ -2168,6 +2200,7 @@ function goV(v,btn){
   if(v==='clicksign'){renderCSdocs();const t=document.getElementById('csToken');if(t)t.value=CS_TOKEN;}
   if(v==='recebiveis') renderRecebiveis();
   if(v==='inadimplencia') renderInadimplencia();
+  if(v==='comissoes'){ populateComMes(); renderComissoes(); }
   if(v==='relatorios') renderRelatorios();
   if(v==='log') renderLog();
   if(v==='contrato')loadContratoLeads();
@@ -2752,6 +2785,172 @@ function exportFinMesPDF(){
   });
   rows.push('<\/table>');
   exportPDF('Relatório Financeiro Mensal', rows.join(''));
+}
+
+
+
+// ═══ COMISSÕES ═══
+const TAXA_COMISSAO = 0.10; // 10%
+
+function populateComMes(){
+  const sel=document.getElementById('comMes'); if(!sel) return;
+  const meses=new Set();
+  recs.forEach(r=>{
+    if(!r.created_at) return;
+    const brOff=-3*60; const d=new Date(r.created_at);
+    const br=new Date(d.getTime()+(brOff-(-d.getTimezoneOffset()))*60000);
+    meses.add(br.toISOString().slice(0,7));
+  });
+  const atual=new Date();
+  const brOff=-3*60;
+  const brNow=new Date(atual.getTime()+(brOff-(-atual.getTimezoneOffset()))*60000);
+  const mesCur=brNow.toISOString().slice(0,7);
+  const prev=sel.value||mesCur;
+  sel.innerHTML='<option value="">Todos os meses</option>';
+  [...meses].sort((a,b)=>b.localeCompare(a)).forEach(m=>{
+    const d=new Date(m+'-01');
+    const lbl=d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+    sel.innerHTML+='<option value="'+m+'"'+(m===prev?' selected':'')+'>'+lbl+'</option>';
+  });
+}
+
+async function renderComissoes(){
+  const grid=document.getElementById('comGrid'); if(!grid) return;
+  const mesFil=document.getElementById('comMes')?.value||'';
+  const brOff=-3*60;
+  function getMesBR(ds){if(!ds)return'';const d=new Date(ds);return new Date(d.getTime()+(brOff-(-d.getTimezoneOffset()))*60000).toISOString().slice(0,7);}
+
+  // Pega colaboradores do Supabase
+  let colabs=[];
+  try{
+    const data=await sb('GET','colaboradores?ativo=eq.true&select=nome,email,role&order=nome.asc');
+    colabs=data||[];
+  }catch(e){}
+  if(!colabs.find(c=>c.nome==='JustHelp')) colabs.unshift({nome:'JustHelp Admin',email:'justhelpbr@gmail.com',role:'Administrador'});
+
+  // Para cada colaborador, encontra os leads cujo processo está pago completo (Ganho fechado)
+  // e calcula a comissão
+  const cm={};
+  colabs.forEach(col=>{
+    cm[col.nome]={
+      nome:col.nome, email:col.email, role:col.role,
+      processos:[], totalBruto:0, totalComissao:0, totalPago:0, totalPendente:0
+    };
+  });
+
+  recs.forEach(r=>{
+    // Só processa leads ganhos com responsável e valor definido
+    if(r.estagio!=='Ganho fechado') return;
+    const resp=r.responsavel||'JustHelp';
+    const pv=PVALS[r.plano]||0; if(!pv) return;
+    const comissao=Math.round(pv*TAXA_COMISSAO*100)/100;
+    const mes=getMesBR(r.created_at);
+    if(mesFil&&mes!==mesFil) return;
+
+    // Cria entrada para o responsável mesmo que não tenha conta
+    if(!cm[resp]) cm[resp]={nome:resp,email:'',role:'',processos:[],totalBruto:0,totalComissao:0,totalPago:0,totalPendente:0};
+
+    const comSt=r.comissao_status||'pendente';
+    cm[resp].processos.push({
+      id:r.id, nome:r.nome, plano:r.plano, valorTotal:pv,
+      comissao, status:comSt, data:r.created_at, mes
+    });
+    cm[resp].totalBruto+=pv;
+    cm[resp].totalComissao+=comissao;
+    if(comSt==='pago') cm[resp].totalPago+=comissao;
+    else cm[resp].totalPendente+=comissao;
+  });
+
+  // Remove colaboradores sem processos
+  const arr=Object.values(cm).filter(v=>v.processos.length>0).sort((a,b)=>b.totalComissao-a.totalComissao);
+  const totalGeral=arr.reduce((s,v)=>s+v.totalComissao,0);
+  const totalPago=arr.reduce((s,v)=>s+v.totalPago,0);
+  const totalPend=arr.reduce((s,v)=>s+v.totalPendente,0);
+
+  const totEl=document.getElementById('comTotal');
+  if(totEl) totEl.textContent='Total: R$ '+totalGeral.toLocaleString('pt-BR')+' | Pago: R$ '+totalPago.toLocaleString('pt-BR')+' | Pendente: R$ '+totalPend.toLocaleString('pt-BR');
+
+  if(!arr.length){
+    grid.innerHTML='<div class="empty-st"><div class="ei">💰</div><div>Nenhuma comissão para o período</div><div>Comissões são geradas quando o processo chega em "Ganho fechado"</div></div>';
+    return;
+  }
+
+  // Resumo geral
+  let html='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">'
+    +'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px;text-align:center">'
+    +'<div style="font-size:.58rem;font-weight:700;text-transform:uppercase;color:var(--textdim);margin-bottom:4px">Total Comissões</div>'
+    +'<div style="font-family:Montserrat,sans-serif;font-size:1.2rem;font-weight:900;color:var(--gold2)">R$ '+totalGeral.toLocaleString('pt-BR')+'</div>'
+    +'<div style="font-size:.62rem;color:var(--textdim)">'+arr.reduce((s,v)=>s+v.processos.length,0)+' processos</div></div>'
+    +'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px;text-align:center">'
+    +'<div style="font-size:.58rem;font-weight:700;text-transform:uppercase;color:var(--textdim);margin-bottom:4px">Já Pago</div>'
+    +'<div style="font-family:Montserrat,sans-serif;font-size:1.2rem;font-weight:900;color:var(--green2)">R$ '+totalPago.toLocaleString('pt-BR')+'</div>'
+    +'<div style="font-size:.62rem;color:var(--green2)">'+arr.reduce((s,v)=>s+v.processos.filter(p=>p.status==='pago').length,0)+' processos</div></div>'
+    +'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px;text-align:center">'
+    +'<div style="font-size:.58rem;font-weight:700;text-transform:uppercase;color:var(--textdim);margin-bottom:4px">A Pagar</div>'
+    +'<div style="font-family:Montserrat,sans-serif;font-size:1.2rem;font-weight:900;color:var(--red2)">R$ '+totalPend.toLocaleString('pt-BR')+'</div>'
+    +'<div style="font-size:.62rem;color:var(--red2)">'+arr.reduce((s,v)=>s+v.processos.filter(p=>p.status!=='pago').length,0)+' processos</div></div>'
+    +'</div>';
+
+  // Card por colaborador
+  arr.forEach(v=>{
+    const ini=v.nome.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    const pct=v.totalComissao?Math.round(v.totalPago/v.totalComissao*100):0;
+    html+='<div class="com-card">'
+      +'<div class="com-header">'
+      +'<div class="com-av">'+ini+'</div>'
+      +'<div style="flex:1"><div style="font-size:.86rem;font-weight:700">'+v.nome+'</div>'
+      +'<div style="font-size:.64rem;color:var(--textdim)">'+v.email+(v.role?' • '+v.role:'')+'</div></div>'
+      +'<div style="text-align:right">'
+      +'<div style="font-family:Montserrat,sans-serif;font-size:1.1rem;font-weight:900;color:var(--gold2)">R$ '+v.totalComissao.toLocaleString('pt-BR')+'</div>'
+      +'<div style="font-size:.62rem;color:var(--textdim)">10% de R$ '+v.totalBruto.toLocaleString('pt-BR')+'</div></div></div>'
+      // Barra de progresso pago/pendente
+      +'<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">'
+      +'<div style="flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden">'
+      +'<div style="height:100%;border-radius:3px;background:var(--green2);width:'+pct+'%;transition:width .5s"></div></div>'
+      +'<span style="font-size:.62rem;color:var(--green2);white-space:nowrap">'+pct+'% pago</span></div>'
+      // Processos
+      +v.processos.map(p=>`
+        <div class="com-row ${p.status==='pago'?'com-pago':'com-pendente'}">
+          <div style="flex:1">
+            <div style="font-weight:600">${p.nome}</div>
+            <div style="font-size:.62rem;color:var(--textdim)">${p.plano} • ${fd(p.data)}</div>
+          </div>
+          <div style="text-align:right;margin-right:10px">
+            <div style="font-family:Montserrat,sans-serif;font-weight:800;color:var(--gold2)">R$ ${p.comissao.toLocaleString('pt-BR')}</div>
+            <div style="font-size:.58rem;color:var(--textdim)">10% de R$ ${p.valorTotal.toLocaleString('pt-BR')}</div>
+          </div>
+          <button class="com-badge ${p.status==='pago'?'parc-pago':'parc-pend'}" onclick="toggleComissao('${p.id}','${p.status}')">
+            ${p.status==='pago'?'✅ Pago':'⏳ Pendente'}
+          </button>
+        </div>`).join('')
+      +'</div>';
+  });
+  grid.innerHTML=html;
+}
+
+async function toggleComissao(id, stAtual){
+  const r=recs.find(x=>x.id===id); if(!r) return;
+  const novo=stAtual==='pago'?'pendente':'pago';
+  editId=id;
+  await upsert({...r, comissao_status:novo, updated_at:new Date().toISOString()});
+  editId=null;
+  renderComissoes();
+  addHist('nota','Comissão de <strong>'+r.responsavel+'</strong> pelo processo de <strong>'+r.nome+'</strong> marcada como: '+novo, r.id);
+  toast('Comissão marcada como '+(novo==='pago'?'paga ✅':'pendente ⏳'),'ok');
+}
+
+function exportComissoesPDF(){
+  const mes=document.getElementById('comMes')?.value||'';
+  const brOff=-3*60;
+  function getMesBR(ds){if(!ds)return'';const d=new Date(ds);return new Date(d.getTime()+(brOff-(-d.getTimezoneOffset()))*60000).toISOString().slice(0,7);}
+  const rows=['<table><tr><th>Colaborador</th><th>Cliente</th><th>Plano</th><th>Valor Total</th><th>Comissão (10%)</th><th>Status</th><th>Data</th><\/tr>'];
+  recs.filter(r=>r.estagio==='Ganho fechado'&&PVALS[r.plano]).filter(r=>!mes||(getMesBR(r.created_at)===mes)).sort((a,b)=>(a.responsavel||'').localeCompare(b.responsavel||'')).forEach(r=>{
+    const pv=PVALS[r.plano]||0;
+    rows.push('<tr><td>'+(r.responsavel||'JustHelp')+'<\/td><td>'+r.nome+'<\/td><td>'+r.plano+'<\/td><td>R$ '+pv.toLocaleString('pt-BR')+'<\/td><td>R$ '+Math.round(pv*0.1).toLocaleString('pt-BR')+'<\/td><td>'+(r.comissao_status==='pago'?'Pago':'Pendente')+'<\/td><td>'+fd(r.created_at)+'<\/td><\/tr>');
+  });
+  rows.push('<\/table>');
+  const titulo='Relatório de Comissões'+(mes?' — '+new Date(mes+'-01').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):'');
+  exportPDF(titulo, rows.join(''));
 }
 
 
