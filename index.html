@@ -1478,7 +1478,7 @@ function formHtml(r){
   +'<div class="fg-2"><div class="fg"><label>Nome Completo *</label><input id="fN" value="'+(r.nome||'')+'" placeholder="Nome completo"></div>'
   +'<div class="fg"><label>Responsável</label>'
   +(isAdmin()
-    ? '<select id="fR">'+selOpts(RESPS,r.responsavel||currentUser?.nome||'JustHelp')+'</select>'
+    ? '<select id="fR"><option value="">Carregando...</option></select>'
     : '<input id="fR" value="'+(r.responsavel||currentUser?.nome||'JustHelp')+'" readonly style="background:var(--bg4);color:var(--textdim);cursor:not-allowed">'
   )+'</div></div>'
   +'<div class="fg-2"><div class="fg"><label>CPF</label><input id="fCPF" value="'+(r.cpf||'')+'" placeholder="000.000.000-00"></div>'
@@ -2186,6 +2186,7 @@ function openNew(){
   document.getElementById('drFoot').style.display='flex';
   document.getElementById('drBody').innerHTML=formHtml({});
   document.getElementById('drawer').classList.add('open');
+  if(isAdmin()) populateRespSelect(null);
 }
 
 function openEdit(id){
@@ -2196,6 +2197,21 @@ function openEdit(id){
   document.getElementById('drFoot').style.display='flex';
   document.getElementById('drBody').innerHTML=formHtml(r);
   document.getElementById('drawer').classList.add('open');
+  if(isAdmin()) populateRespSelect(r.responsavel);
+}
+
+async function populateRespSelect(current){
+  const sel=document.getElementById('fR');
+  if(!sel||sel.tagName!=='SELECT') return;
+  try{
+    const data=await sb('GET','colaboradores?ativo=eq.true&select=nome&order=nome.asc');
+    const nomes=['JustHelp',...(data||[]).map(c=>c.nome).filter(Boolean)];
+    const unique=[...new Set(nomes)];
+    sel.innerHTML=unique.map(n=>'<option value="'+n+'"'+(n===(current||currentUser?.nome)?' selected':'')+'>'+n+'</option>').join('');
+  }catch(e){
+    // Fallback para lista estática
+    sel.innerHTML=RESPS.map(n=>'<option value="'+n+'"'+(n===(current||currentUser?.nome)?' selected':'')+'>'+n+'</option>').join('');
+  }
 }
 
 function closeDrawer(){document.getElementById('drawer').classList.remove('open');}
