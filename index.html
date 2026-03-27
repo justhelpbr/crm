@@ -946,23 +946,43 @@ function initSupabase(){
   } catch(e){ return null; }
 }
 
-// Usuários com acesso ao CRM
+// Usuários admin fixos
 const CRM_USERS = [
   {email:'justhelpbr@gmail.com', senha:'Just1230@', nome:'JustHelp Admin', role:'Administrador'},
 ];
 
-function doLogin(){
+async function doLogin(){
   const email = document.getElementById('loginEmail').value.trim().toLowerCase();
   const pass  = document.getElementById('loginPass').value;
   const btn   = document.getElementById('loginBtn');
   const err   = document.getElementById('loginErr');
   if(!email||!pass){ err.textContent='Preencha e-mail e senha.'; return; }
-  const user = CRM_USERS.find(u=>u.email===email && u.senha===pass);
-  if(!user){ err.textContent='E-mail ou senha incorretos.'; return; }
-  // Salva sessão no localStorage
-  localStorage.setItem('jh_session', JSON.stringify({email:user.email,nome:user.nome,role:user.role}));
-  currentUser = user;
-  onLoginSuccess(user);
+  btn.textContent='Entrando...'; btn.disabled=true; err.textContent='';
+
+  // 1. Verifica usuários admin fixos
+  const adminUser = CRM_USERS.find(u=>u.email===email && u.senha===pass);
+  if(adminUser){
+    localStorage.setItem('jh_session', JSON.stringify({email:adminUser.email,nome:adminUser.nome,role:adminUser.role}));
+    currentUser = adminUser;
+    onLoginSuccess(adminUser);
+    return;
+  }
+
+  // 2. Verifica colaboradores cadastrados no Supabase
+  try{
+    const {data,error} = await sb('GET','colaboradores?email=eq.'+encodeURIComponent(email)+'&select=*');
+    if(error||!data||!data.length){ throw new Error('not found'); }
+    const colab = data[0];
+    // Verifica senha (armazenada como hash simples btoa)
+    if(btoa(pass) !== colab.senha_hash){ throw new Error('wrong pass'); }
+    const user = {email:colab.email, nome:colab.nome, role:colab.role||'assistente'};
+    localStorage.setItem('jh_session', JSON.stringify(user));
+    currentUser = user;
+    onLoginSuccess(user);
+  } catch(e){
+    err.textContent='E-mail ou senha incorretos.';
+    btn.textContent='Entrar'; btn.disabled=false;
+  }
 }
 
 function onLoginSuccess(user){
@@ -1011,16 +1031,13 @@ async function loadColabs(){
   const grid = document.getElementById('colabGrid');
   if(!sbAuth){ grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-dim);font-size:.78rem">Conecte o Supabase para gerenciar colaboradores.</div>'; return; }
   try{
-    // List users via admin API — requires service role, so we use user metadata stored in a table
-    // Fallback: show current user + any stored in a colabs table
-    const {data,error} = await sbAuth.from('colaboradores').select('*').order('created_at',{ascending:false});
-    if(error) throw error;
+    const data = await sb('GET','colaboradores?order=created_at.desc');
     renderColabs(data||[]);
   } catch(e){
     // Table might not exist yet
     grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-dim);font-size:.78rem">
       Execute o SQL abaixo no Supabase para habilitar colaboradores:<br><br>
-      <code style="color:#7dd3fc;font-size:.66rem">CREATE TABLE IF NOT EXISTS colaboradores (id uuid DEFAULT gen_random_uuid() PRIMARY KEY, nome text, email text UNIQUE, role text DEFAULT 'assistente', ativo boolean DEFAULT true, created_at timestamptz DEFAULT now()); ALTER TABLE colaboradores ENABLE ROW LEVEL SECURITY; CREATE POLICY "pub_colab" ON colaboradores FOR ALL USING (true) WITH CHECK (true);</code>
+      <code style="color:#7dd3fc;font-size:.66rem">CREATE TABLE IF NOT EXISTS colaboradores (id uuid DEFAULT gen_random_uuid() PRIMARY KEY, nome text, email text UNIQUE, senha_hash text, role text DEFAULT 'assistente', ativo boolean DEFAULT true, created_at timestamptz DEFAULT now()); ALTER TABLE colaboradores ENABLE ROW LEVEL SECURITY; CREATE POLICY "pub_colab" ON colaboradores FOR ALL USING (true) WITH CHECK (true);</code>
     </div>`;
   }
 }
@@ -1066,27 +1083,21 @@ async function criarColab(){
   if(senha.length<6){ errEl.textContent='Senha deve ter pelo menos 6 caracteres.'; return; }
   errEl.textContent='Criando acesso...';
   try{
-    // 1. Create auth user
-    const {data:authData, error:authErr} = await sbAuth.auth.signUp({
-      email, password:senha,
-      options:{ data:{ nome, role } }
-    });
-    if(authErr) throw authErr;
-    // 2. Save in colaboradores table
-    const {error:dbErr} = await sbAuth.from('colaboradores').insert({nome,email,role});
-    if(dbErr) throw dbErr;
-    toast('Colaborador criado! E-mail de confirmação enviado.','ok');
+    const senha_hash = btoa(senha); // hash simples para armazenamento
+    const {error:dbErr} = await sb('POST','colaboradores',{nome,email,role,senha_hash});
+    if(dbErr) throw new Error(dbErr);
+    toast('Colaborador criado com sucesso!','ok');
     closeColabModal();
     loadColabs();
   } catch(e){
-    errEl.textContent = e.message.includes('already registered')?'Este e-mail já está cadastrado.':e.message;
+    errEl.textContent = (e.message||'').includes('duplicate')||( e.message||'').includes('unique')?'Este e-mail já está cadastrado.':('Erro: '+(e.message||''));
   }
 }
 
 async function removeColab(id, email){
   if(!confirm('Remover acesso de '+email+'?')) return;
   try{
-    await sbAuth.from('colaboradores').delete().eq('id',id);
+    await sb('DELETE','colaboradores?id=eq.'+id);
     toast('Colaborador removido','inf');
     loadColabs();
   } catch(e){ toast('Erro: '+e.message,'err'); }
