@@ -560,12 +560,16 @@ tr:hover .td-acts{opacity:1}
           </div>
         </div>
         <!-- KPIs MÊS ATUAL -->
-        <div class="kpi-row" style="grid-template-columns:repeat(5,1fr)">
+        <div class="kpi-row" style="grid-template-columns:repeat(4,1fr)">
           <div class="kpi"><div class="kpi-bar" style="background:var(--blue)"></div><div class="kpi-lbl">Leads Este Mês</div><div class="kpi-val" style="color:var(--blue)" id="k1">0</div><div class="kpi-sub" id="k1sub">0 total</div></div>
           <div class="kpi"><div class="kpi-bar" style="background:var(--gold2)"></div><div class="kpi-lbl">Negócios Ativos</div><div class="kpi-val" style="color:var(--gold2)" id="k2">0</div><div class="kpi-sub" id="k2sub">em andamento</div></div>
           <div class="kpi"><div class="kpi-bar" style="background:var(--green2)"></div><div class="kpi-lbl">Ganhos Este Mês</div><div class="kpi-val" style="color:var(--green2)" id="k3">0</div><div class="kpi-sub" id="k3sub">0 total</div></div>
           <div class="kpi"><div class="kpi-bar" style="background:var(--red2)"></div><div class="kpi-lbl">Entradas Este Mês</div><div class="kpi-val" style="color:var(--red2)" id="k4">R$0</div><div class="kpi-sub" id="k4sub">R$0 total</div></div>
-          <div class="kpi"><div class="kpi-bar" style="background:var(--teal)"></div><div class="kpi-lbl">Receita Projetada</div><div class="kpi-val" style="color:var(--teal)" id="k5">R$0</div><div class="kpi-sub" id="k5sub">todos os planos</div></div>
+        </div>
+        <div class="kpi-row" style="grid-template-columns:repeat(3,1fr);margin-top:-4px">
+          <div class="kpi"><div class="kpi-bar" style="background:var(--teal)"></div><div class="kpi-lbl">Receita Bruta Projetada</div><div class="kpi-val" style="color:var(--teal)" id="k5">R$0</div><div class="kpi-sub" id="k5sub">todos os planos</div></div>
+          <div class="kpi"><div class="kpi-bar" style="background:#A78BFA"></div><div class="kpi-lbl">Total Comissões (10%)</div><div class="kpi-val" style="color:#A78BFA" id="k6">R$0</div><div class="kpi-sub" id="k6sub">R$0 já pago</div></div>
+          <div class="kpi" style="border-color:rgba(0,180,162,.3)"><div class="kpi-bar" style="background:linear-gradient(90deg,var(--teal),var(--green2))"></div><div class="kpi-lbl">Receita Líquida</div><div class="kpi-val" style="color:var(--green2)" id="k7">R$0</div><div class="kpi-sub" id="k7sub">bruto − comissões</div></div>
         </div>
         <!-- COMPARATIVO MÊS -->
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:12px">
@@ -1291,20 +1295,31 @@ function renderAll(){
 function renderDash(){
   const now = new Date();
   // Usa horário de Brasília (UTC-3) para não errar o mês
-  const brOffset = -3 * 60;
-  const brNow = new Date(now.getTime() + (brOffset - (-now.getTimezoneOffset())) * 60000);
-  const mesCur = brNow.toISOString().slice(0,7);
-  const mesAntDate = new Date(brNow.getFullYear(), brNow.getMonth()-1, 1);
-  const mesAnt = mesAntDate.toISOString().slice(0,7);
-  const nomeMes = brNow.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
-  const nomeAnt = mesAntDate.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
-
-  // Converte created_at para horário BR antes de comparar
+  // Usa Intl para garantir timezone Brasília correto
   function getMesBR(dateStr){
     if(!dateStr) return '';
-    const d = new Date(dateStr);
-    const br = new Date(d.getTime() + (brOffset - (-d.getTimezoneOffset())) * 60000);
-    return br.toISOString().slice(0,7);
+    try{
+      return new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit'}).format(new Date(dateStr));
+    }catch(e){ return new Date(dateStr).toISOString().slice(0,7); }
+  }
+  const mesCur = getMesBR(now.toISOString());
+  const [yCur,mCur] = mesCur.split('-').map(Number);
+  const mesAntDate = new Date(yCur, mCur-2, 1);
+  const mesAnt = getMesBR(mesAntDate.toISOString());
+  const nomeMes = new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',month:'long',year:'numeric'}).format(now);
+  const nomeAnt = new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',month:'long',year:'numeric'}).format(mesAntDate);
+
+  // Converte para horário Brasília usando Intl (correto independente do timezone do cliente)
+  function getMesBR(dateStr){
+    if(!dateStr) return '';
+    try{
+      const d = new Date(dateStr);
+      // Formata direto no timezone de Brasília
+      const fmt = new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit'});
+      return fmt.format(d); // retorna "YYYY-MM"
+    }catch(e){
+      return new Date(dateStr).toISOString().slice(0,7);
+    }
   }
 
   // Filtra por mês em horário BR
@@ -1320,6 +1335,10 @@ function renderDash(){
   const entMes = recsMes.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
   const entAll = recs.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
   const recAll = recs.reduce((s,r)=>s+(PVALS[r.plano]||0),0);
+  // Comissões — 10% dos processos ganhos
+  const comTotal = recs.filter(r=>r.estagio==='Ganho fechado').reduce((s,r)=>s+Math.round((PVALS[r.plano]||0)*TAXA_COMISSAO),0);
+  const comPago  = recs.filter(r=>r.estagio==='Ganho fechado'&&r.comissao_status==='pago').reduce((s,r)=>s+Math.round((PVALS[r.plano]||0)*TAXA_COMISSAO),0);
+  const recLiq   = recAll - comTotal;
 
   // KPIs mês anterior (para comparativo)
   const totalAnt = recsAnt.length;
@@ -1335,6 +1354,8 @@ function renderDash(){
   if(el('k3')){ el('k3').textContent=ganhosMes; el('k3sub').textContent=ganhosAll+' total'; }
   if(el('k4')){ el('k4').textContent='R$'+entMes.toLocaleString('pt-BR'); el('k4sub').textContent='R$'+entAll.toLocaleString('pt-BR')+' total'; }
   if(el('k5')){ el('k5').textContent='R$'+recAll.toLocaleString('pt-BR'); el('k5sub').textContent='todos os planos'; }
+  if(el('k6')){ el('k6').textContent='R$'+comTotal.toLocaleString('pt-BR'); el('k6sub').textContent='R$'+comPago.toLocaleString('pt-BR')+' já pago'; }
+  if(el('k7')){ el('k7').textContent='R$'+recLiq.toLocaleString('pt-BR'); el('k7sub').textContent='bruto − comissões'; }
   if(el('dDate')) el('dDate').textContent=now.toLocaleDateString('pt-BR');
 
   // Comparativo
@@ -1344,7 +1365,7 @@ function renderDash(){
     {l:'Leads',cur:totalMes,prev:totalAnt,fmt:v=>v},
     {l:'Ganhos',cur:ganhosMes,prev:ganhosAntN,fmt:v=>v},
     {l:'Entradas',cur:entMes,prev:entAnt,fmt:v=>'R$'+v.toLocaleString('pt-BR')},
-    {l:'Conv. %',cur:totalMes?Math.round(ganhosMes/totalMes*100):0,prev:totalAnt?Math.round(ganhosAntN/totalAnt*100):0,fmt:v=>v+'%'},
+    {l:'Rec. Líquida',cur:entMes-Math.round(recsMes.filter(r=>r.estagio==='Ganho fechado').reduce((s,r)=>s+(PVALS[r.plano]||0)*TAXA_COMISSAO,0)),prev:entAnt-Math.round(recsAnt.filter(r=>r.estagio==='Ganho fechado').reduce((s,r)=>s+(PVALS[r.plano]||0)*TAXA_COMISSAO,0)),fmt:v=>'R$'+Math.max(0,v).toLocaleString('pt-BR')},
   ];
   if(el('comparativo')) el('comparativo').innerHTML=compItems.map(item=>`
     <div style="background:var(--bg3);border-radius:var(--rs);padding:10px;text-align:center">
@@ -1796,10 +1817,8 @@ function salvarMeta(){
 }
 function renderMeta(){
   const now=new Date();
-  const brOff=-3*60;
-  const brNow=new Date(now.getTime()+(brOff-(-now.getTimezoneOffset()))*60000);
-  const mes=brNow.toISOString().slice(0,7);
-  function getMesBR(ds){if(!ds)return'';const d=new Date(ds);return new Date(d.getTime()+(brOff-(-d.getTimezoneOffset()))*60000).toISOString().slice(0,7);}
+  function getMesBR(ds){if(!ds)return'';try{return new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit'}).format(new Date(ds));}catch(e){return new Date(ds).toISOString().slice(0,7);}}
+  const mes=getMesBR(now.toISOString());
   const meta=Number(localStorage.getItem('jh_meta_'+mes)||0);
   const inp=document.getElementById('metaInp');if(inp&&meta)inp.value=meta;
   const recMes=recs.filter(r=>getMesBR(r.created_at)===mes&&r.valor_entrada).reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
@@ -1808,7 +1827,7 @@ function renderMeta(){
   const pctEl=document.getElementById('metaPct');if(pctEl)pctEl.textContent=pct+'%';
   document.getElementById('metaAtual').textContent='R$ '+recMes.toLocaleString('pt-BR')+' alcançado';
   document.getElementById('metaAlvo').textContent='Meta: R$ '+(meta||0).toLocaleString('pt-BR');
-  document.getElementById('metaSub').textContent=brNow.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})+' — '+pct+'% atingido';
+  document.getElementById('metaSub').textContent=new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',month:'long',year:'numeric'}).format(now)+' — '+pct+'% atingido';
   const mm={};
   recs.forEach(r=>{if(!r.created_at||!r.valor_entrada)return;const m=getMesBR(r.created_at);mm[m]=(mm[m]||{t:0,c:0});mm[m].t+=Number(r.valor_entrada)||0;mm[m].c++;});
   const mc=document.getElementById('mesCards');
@@ -2671,9 +2690,7 @@ function renderRelatorios(){
   const mm={};
   recs.forEach(r=>{
     if(!r.created_at||!r.valor_entrada) return;
-    const brOff=-3*60; const d=new Date(r.created_at);
-    const br=new Date(d.getTime()+(brOff-(-d.getTimezoneOffset()))*60000);
-    const m=br.toISOString().slice(0,7);
+    const m=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit'}).format(new Date(r.created_at));
     if(!mm[m]) mm[m]={leads:0,entradas:0,ganhos:0,projetado:0};
     mm[m].leads++;
     mm[m].entradas+=Number(r.valor_entrada)||0;
@@ -2772,9 +2789,7 @@ function exportFinMesPDF(){
   const mm={};
   recs.forEach(r=>{
     if(!r.created_at||!r.valor_entrada) return;
-    const brOff=-3*60; const d=new Date(r.created_at);
-    const br=new Date(d.getTime()+(brOff-(-d.getTimezoneOffset()))*60000);
-    const m=br.toISOString().slice(0,7);
+    const m=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit'}).format(new Date(r.created_at));
     if(!mm[m]) mm[m]={leads:0,entradas:0,ganhos:0};
     mm[m].leads++; mm[m].entradas+=Number(r.valor_entrada)||0;
     if(r.estagio==='Ganho fechado') mm[m].ganhos++;
@@ -2797,14 +2812,10 @@ function populateComMes(){
   const meses=new Set();
   recs.forEach(r=>{
     if(!r.created_at) return;
-    const brOff=-3*60; const d=new Date(r.created_at);
-    const br=new Date(d.getTime()+(brOff-(-d.getTimezoneOffset()))*60000);
-    meses.add(br.toISOString().slice(0,7));
+    meses.add(new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit'}).format(new Date(r.created_at)));
   });
   const atual=new Date();
-  const brOff=-3*60;
-  const brNow=new Date(atual.getTime()+(brOff-(-atual.getTimezoneOffset()))*60000);
-  const mesCur=brNow.toISOString().slice(0,7);
+  const mesCur=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit'}).format(atual);
   const prev=sel.value||mesCur;
   sel.innerHTML='<option value="">Todos os meses</option>';
   [...meses].sort((a,b)=>b.localeCompare(a)).forEach(m=>{
@@ -2817,8 +2828,7 @@ function populateComMes(){
 async function renderComissoes(){
   const grid=document.getElementById('comGrid'); if(!grid) return;
   const mesFil=document.getElementById('comMes')?.value||'';
-  const brOff=-3*60;
-  function getMesBR(ds){if(!ds)return'';const d=new Date(ds);return new Date(d.getTime()+(brOff-(-d.getTimezoneOffset()))*60000).toISOString().slice(0,7);}
+  function getMesBR(ds){if(!ds)return'';try{return new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit'}).format(new Date(ds));}catch(e){return''}}
 
   // Pega colaboradores do Supabase
   let colabs=[];
@@ -2941,8 +2951,7 @@ async function toggleComissao(id, stAtual){
 
 function exportComissoesPDF(){
   const mes=document.getElementById('comMes')?.value||'';
-  const brOff=-3*60;
-  function getMesBR(ds){if(!ds)return'';const d=new Date(ds);return new Date(d.getTime()+(brOff-(-d.getTimezoneOffset()))*60000).toISOString().slice(0,7);}
+  function getMesBR(ds){if(!ds)return'';try{return new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit'}).format(new Date(ds));}catch(e){return''}}
   const rows=['<table><tr><th>Colaborador</th><th>Cliente</th><th>Plano</th><th>Valor Total</th><th>Comissão (10%)</th><th>Status</th><th>Data</th><\/tr>'];
   recs.filter(r=>r.estagio==='Ganho fechado'&&PVALS[r.plano]).filter(r=>!mes||(getMesBR(r.created_at)===mes)).sort((a,b)=>(a.responsavel||'').localeCompare(b.responsavel||'')).forEach(r=>{
     const pv=PVALS[r.plano]||0;
