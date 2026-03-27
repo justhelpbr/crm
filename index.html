@@ -461,12 +461,31 @@ tr:hover .td-acts{opacity:1}
     <!-- DASHBOARD -->
     <div class="view active" id="view-dashboard">
       <div class="dash-wrap">
-        <div class="kpi-row">
-          <div class="kpi"><div class="kpi-bar" style="background:var(--blue)"></div><div class="kpi-lbl">Leads Totais</div><div class="kpi-val" style="color:var(--blue)" id="k1">0</div><div class="kpi-sub">clientes potenciais</div></div>
-          <div class="kpi"><div class="kpi-bar" style="background:var(--gold2)"></div><div class="kpi-lbl">Negócios Ativos</div><div class="kpi-val" style="color:var(--gold2)" id="k2">0</div><div class="kpi-sub">em andamento</div></div>
-          <div class="kpi"><div class="kpi-bar" style="background:var(--green2)"></div><div class="kpi-lbl">Ganhos Fechados</div><div class="kpi-val" style="color:var(--green2)" id="k3">0</div><div class="kpi-sub">processos concluídos</div></div>
-          <div class="kpi"><div class="kpi-bar" style="background:var(--red2)"></div><div class="kpi-lbl">Entradas Recebidas</div><div class="kpi-val" style="color:var(--red2)" id="k4">R$0</div><div class="kpi-sub">via PIX</div></div>
-          <div class="kpi"><div class="kpi-bar" style="background:var(--teal)"></div><div class="kpi-lbl">Receita Projetada</div><div class="kpi-val" style="color:var(--teal)" id="k5">R$0</div><div class="kpi-sub">total dos planos</div></div>
+        <!-- MÊS ATUAL HEADER -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-family:Syne,sans-serif;font-size:.9rem;font-weight:700" id="dashMesLabel">Mês atual</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:.64rem;color:var(--textdim)" id="dashLastUpdate">Atualizando...</span>
+            <button onclick="loadData()" style="padding:4px 10px;border-radius:var(--rs);border:1px solid var(--border);background:var(--bg3);color:var(--textmid);font-size:.64rem;cursor:pointer;transition:.15s" onmouseover="this.style.color='#E2E8F0'" onmouseout="this.style.color='var(--textmid)'">↻ Atualizar</button>
+          </div>
+        </div>
+        <!-- KPIs MÊS ATUAL -->
+        <div class="kpi-row" style="grid-template-columns:repeat(5,1fr)">
+          <div class="kpi"><div class="kpi-bar" style="background:var(--blue)"></div><div class="kpi-lbl">Leads Este Mês</div><div class="kpi-val" style="color:var(--blue)" id="k1">0</div><div class="kpi-sub" id="k1sub">0 total</div></div>
+          <div class="kpi"><div class="kpi-bar" style="background:var(--gold2)"></div><div class="kpi-lbl">Negócios Ativos</div><div class="kpi-val" style="color:var(--gold2)" id="k2">0</div><div class="kpi-sub" id="k2sub">em andamento</div></div>
+          <div class="kpi"><div class="kpi-bar" style="background:var(--green2)"></div><div class="kpi-lbl">Ganhos Este Mês</div><div class="kpi-val" style="color:var(--green2)" id="k3">0</div><div class="kpi-sub" id="k3sub">0 total</div></div>
+          <div class="kpi"><div class="kpi-bar" style="background:var(--red2)"></div><div class="kpi-lbl">Entradas Este Mês</div><div class="kpi-val" style="color:var(--red2)" id="k4">R$0</div><div class="kpi-sub" id="k4sub">R$0 total</div></div>
+          <div class="kpi"><div class="kpi-bar" style="background:var(--teal)"></div><div class="kpi-lbl">Receita Projetada</div><div class="kpi-val" style="color:var(--teal)" id="k5">R$0</div><div class="kpi-sub" id="k5sub">todos os planos</div></div>
+        </div>
+        <!-- COMPARATIVO MÊS -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:12px">
+          <div style="font-size:.7rem;font-weight:700;color:var(--textdim);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">📊 Comparativo Mês Atual vs Mês Anterior</div>
+          <div id="comparativo" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px"></div>
+        </div>
+        <!-- FORMAS DE PAGAMENTO -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:12px">
+          <div style="font-size:.7rem;font-weight:700;color:var(--textdim);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">💳 Formas de Pagamento — Este Mês</div>
+          <div id="pagChart" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
         </div>
         <div class="dash-grid">
           <div class="dcard"><div class="dcard-ttl">Funil de Negócios <small id="dDate"></small></div><div id="funnelC"></div></div>
@@ -709,7 +728,7 @@ tr:hover .td-acts{opacity:1}
     <div class="view" id="view-colaboradores">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0">
         <span style="font-size:.74rem;color:var(--textdim)">Assistentes jurídicos com acesso ao CRM</span>
-        <button class="btn-new" onclick="openNovoColab()">
+        <button class="btn-new" id="btnNovoColab" onclick="openNovoColab()" style="display:none">
           <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo Colaborador
         </button>
       </div>
@@ -744,6 +763,8 @@ CREATE TABLE IF NOT EXISTS leads (
   proximo_contato date, obs_agenda text,
   descricao text, notas jsonb DEFAULT '[]',
   chamadas jsonb DEFAULT '[]',
+  forma_pagamento text DEFAULT 'PIX',
+  parcelas text,
   clicksign_key text, clicksign_status text,
   updated_at timestamptz DEFAULT now(),
   created_at timestamptz DEFAULT now()
@@ -984,32 +1005,91 @@ function renderAll(){
 
 // ═══ DASHBOARD ═══
 function renderDash(){
-  const total=recs.length;
-  const ganhos=recs.filter(r=>r.estagio==='Ganho fechado').length;
-  const ativos=recs.filter(r=>!['Ganho fechado','Cancelado','Congelado'].includes(r.estagio)).length;
-  const ent=recs.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
-  const rec=recs.reduce((s,r)=>s+(PVALS[r.plano]||0),0);
-  document.getElementById('k1').textContent=total;
-  document.getElementById('k2').textContent=ativos;
-  document.getElementById('k3').textContent=ganhos;
-  document.getElementById('k4').textContent='R$'+ent.toLocaleString('pt-BR');
-  document.getElementById('k5').textContent='R$'+rec.toLocaleString('pt-BR');
-  document.getElementById('dDate').textContent=new Date().toLocaleDateString('pt-BR');
+  const now = new Date();
+  const mesCur = now.toISOString().slice(0,7);
+  const mesAnt = new Date(now.getFullYear(), now.getMonth()-1, 1).toISOString().slice(0,7);
+  const nomeMes = now.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  const nomeAnt = new Date(now.getFullYear(), now.getMonth()-1, 1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
 
+  // Filtra por mês
+  const recsMes = recs.filter(r=>(r.created_at||'').startsWith(mesCur));
+  const recsAnt = recs.filter(r=>(r.created_at||'').startsWith(mesAnt));
+
+  // KPIs mês atual
+  const totalMes = recsMes.length;
+  const totalAll = recs.length;
+  const ganhosMes = recsMes.filter(r=>r.estagio==='Ganho fechado').length;
+  const ganhosAll = recs.filter(r=>r.estagio==='Ganho fechado').length;
+  const ativos = recs.filter(r=>!['Ganho fechado','Cancelado','Congelado'].includes(r.estagio)).length;
+  const entMes = recsMes.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
+  const entAll = recs.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
+  const recAll = recs.reduce((s,r)=>s+(PVALS[r.plano]||0),0);
+
+  // KPIs mês anterior (para comparativo)
+  const totalAnt = recsAnt.length;
+  const ganhosAntN = recsAnt.filter(r=>r.estagio==='Ganho fechado').length;
+  const entAnt = recsAnt.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
+
+  // Atualiza KPIs
+  const el = id => document.getElementById(id);
+  if(el('dashMesLabel')) el('dashMesLabel').textContent = '📅 '+nomeMes.charAt(0).toUpperCase()+nomeMes.slice(1);
+  if(el('dashLastUpdate')) el('dashLastUpdate').textContent = 'Atualizado: '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  if(el('k1')){ el('k1').textContent=totalMes; el('k1sub').textContent=totalAll+' total'; }
+  if(el('k2')){ el('k2').textContent=ativos; el('k2sub').textContent='em andamento'; }
+  if(el('k3')){ el('k3').textContent=ganhosMes; el('k3sub').textContent=ganhosAll+' total'; }
+  if(el('k4')){ el('k4').textContent='R$'+entMes.toLocaleString('pt-BR'); el('k4sub').textContent='R$'+entAll.toLocaleString('pt-BR')+' total'; }
+  if(el('k5')){ el('k5').textContent='R$'+recAll.toLocaleString('pt-BR'); el('k5sub').textContent='todos os planos'; }
+  if(el('dDate')) el('dDate').textContent=now.toLocaleDateString('pt-BR');
+
+  // Comparativo
+  function varPct(cur,prev){ if(!prev) return cur>0?'+100%':'—'; const p=Math.round((cur-prev)/prev*100); return (p>=0?'+':'')+p+'%'; }
+  function varCor(cur,prev){ return cur>=prev?'var(--green2)':'var(--red2)'; }
+  const compItems=[
+    {l:'Leads',cur:totalMes,prev:totalAnt,fmt:v=>v},
+    {l:'Ganhos',cur:ganhosMes,prev:ganhosAntN,fmt:v=>v},
+    {l:'Entradas',cur:entMes,prev:entAnt,fmt:v=>'R$'+v.toLocaleString('pt-BR')},
+    {l:'Conv. %',cur:totalMes?Math.round(ganhosMes/totalMes*100):0,prev:totalAnt?Math.round(ganhosAntN/totalAnt*100):0,fmt:v=>v+'%'},
+  ];
+  if(el('comparativo')) el('comparativo').innerHTML=compItems.map(item=>`
+    <div style="background:var(--bg3);border-radius:var(--rs);padding:10px;text-align:center">
+      <div style="font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--textdim);margin-bottom:4px">${item.l}</div>
+      <div style="font-family:Syne,sans-serif;font-size:1.1rem;font-weight:800;margin-bottom:2px">${item.fmt(item.cur)}</div>
+      <div style="font-size:.62rem;color:${varCor(item.cur,item.prev)}">${varPct(item.cur,item.prev)} vs ${nomeAnt.split(' ')[0]}</div>
+    </div>`).join('');
+
+  // Formas de pagamento do mês
+  const pagMes = {};
+  recsMes.forEach(r=>{const p=r.forma_pagamento||'PIX';pagMes[p]=(pagMes[p]||{n:0,v:0});pagMes[p].n++;pagMes[p].v+=Number(r.valor_entrada)||0;});
+  const pagIcos = {'PIX':'💰','Cartão de Crédito':'💳','PIX + Cartão':'💰+💳'};
+  const pagCors = {'PIX':'var(--green2)','Cartão de Crédito':'var(--blue)','PIX + Cartão':'var(--teal)'};
+  if(el('pagChart')){
+    const allPag = ['PIX','Cartão de Crédito','PIX + Cartão'];
+    el('pagChart').innerHTML = allPag.map(p=>`
+      <div style="background:var(--bg3);border-radius:var(--rs);padding:12px;text-align:center;border:1px solid var(--border)">
+        <div style="font-size:1.4rem;margin-bottom:4px">${pagIcos[p]||'💰'}</div>
+        <div style="font-size:.66rem;font-weight:700;color:var(--textdim);margin-bottom:4px">${p}</div>
+        <div style="font-family:Syne,sans-serif;font-size:1rem;font-weight:800;color:${pagCors[p]||'var(--green2)'}">${pagMes[p]?pagMes[p].n+' pag.':'—'}</div>
+        <div style="font-size:.64rem;color:var(--textdim)">${pagMes[p]?'R$ '+pagMes[p].v.toLocaleString('pt-BR'):'R$ 0'}</div>
+      </div>`).join('');
+  }
+
+  // Funil
   const sc={};NESTAGES.forEach(s=>sc[s]=0);recs.forEach(r=>{if(sc[r.estagio]!==undefined)sc[r.estagio]++;});
   const mx=Math.max(...Object.values(sc),1);
-  document.getElementById('funnelC').innerHTML=NESTAGES.filter(s=>sc[s]>0).map(s=>
+  if(el('funnelC')) el('funnelC').innerHTML=NESTAGES.filter(s=>sc[s]>0).map(s=>
     '<div class="f-row"><div class="f-dot" style="background:'+(ECLR[s]||'#555')+'"></div><div class="f-name" title="'+s+'">'+s+'</div><div class="f-bw"><div class="f-b" style="width:'+(sc[s]/mx*100)+'%;background:'+(ECLR[s]||'#555')+'"></div></div><div class="f-cnt" style="color:'+(ECLR[s]||'#aaa')+'">'+sc[s]+'</div></div>'
   ).join('');
 
+  // Fonte
   const fc={};recs.forEach(r=>{const f=r.fonte||'Outros';fc[f]=(fc[f]||0)+1;});
-  document.getElementById('fonteC').innerHTML=Object.entries(fc).sort((a,b)=>b[1]-a[1]).map(([f,c])=>
-    '<div class="src-row"><div style="display:flex;align-items:center;gap:5px"><div class="f-dot" style="background:'+(FCLR[f]||'#555')+'"></div><span style="color:var(--textmid)">'+f+'</span></div><div style="font-weight:700;color:'+(FCLR[f]||'#aaa')+'">'+c+'</div></div>'
+  if(el('fonteC')) el('fonteC').innerHTML=Object.entries(fc).sort((a,b)=>b[1]-a[1]).map(([f,cnt])=>
+    '<div class="src-row"><div style="display:flex;align-items:center;gap:5px"><div class="f-dot" style="background:'+(FCLR[f]||'#555')+'"></div><span style="color:var(--textmid)">'+f+'</span></div><div style="font-weight:700;color:'+(FCLR[f]||'#aaa')+'">'+cnt+'</div></div>'
   ).join('');
 
+  // Owner
   const oc={};recs.forEach(r=>{const o=r.responsavel||'JustHelp';oc[o]=(oc[o]||0)+1;});
-  document.getElementById('ownerC').innerHTML=Object.entries(oc).sort((a,b)=>b[1]-a[1]).map(([o,c])=>
-    '<div class="ow-row"><div class="ow-av">'+o.split(' ').map(w=>w[0]).slice(0,2).join('')+'</div><div style="flex:1;font-size:.7rem;color:var(--textmid);margin-left:6px">'+o+'</div><div style="font-size:.72rem;font-weight:700">'+c+'</div></div>'
+  if(el('ownerC')) el('ownerC').innerHTML=Object.entries(oc).sort((a,b)=>b[1]-a[1]).map(([o,cnt])=>
+    '<div class="ow-row"><div class="ow-av">'+o.split(' ').map(w=>w[0]).slice(0,2).join('')+'</div><div style="flex:1;font-size:.7rem;color:var(--textmid);margin-left:6px">'+o+'</div><div style="font-size:.72rem;font-weight:700">'+cnt+'</div></div>'
   ).join('');
 }
 
@@ -1165,6 +1245,10 @@ function formHtml(r){
   +'<div class="fg-2"><div class="fg"><label>Plano</label><select id="fPl"><option value="">Sem plano</option>'
   +PLANOS.map(a=>'<option'+(a===r.plano?' selected':'')+'>'+a+'</option>').join('')
   +'</select></div><div class="fg"><label>Entrada Paga (R$)</label><input type="number" id="fEn" value="'+(r.valor_entrada||'')+'" placeholder="0"></div></div>'
+  +'<div class="fg-2"><div class="fg"><label>Forma de Pagamento</label><select id="fFpag"><option value="PIX">💰 PIX</option><option value="Cartão de Crédito"'+(r.forma_pagamento==="Cartão de Crédito"?' selected':'')+'>💳 Cartão de Crédito</option><option value="PIX + Cartão"'+(r.forma_pagamento==="PIX + Cartão"?' selected':'')+'>💰+💳 PIX + Cartão</option></select></div>'
+  +'<div class="fg"><label>Parcelas (cartão)</label><select id="fParc"><option value="">À vista</option>'
+  +[2,3,4,5,6,7,8,9,10,11,12].map(n=>'<option value="'+n+'x"'+(r.parcelas==="'+n+'x"?' selected':'')+'>'+n+'x</option>').join('')
+  +'</select></div></div>'
   +'<div class="fg"><label>Descrição / Observações</label><textarea id="fDesc" rows="3" placeholder="Contexto, histórico...">'+(r.descricao||'')+'</textarea></div>'
   +'<div class="fg-sec">📅 Agendamento</div>'
   +'<div class="fg-2"><div class="fg"><label>Próximo Contato</label><input type="date" id="fPC" value="'+(r.proximo_contato||'')+'"></div>'
@@ -1200,6 +1284,8 @@ async function saveRec(){
     status:document.getElementById('fSt')?.value||'Novo Lead',
     estagio:document.getElementById('fEs')?.value||'Proposta de preco',
     plano,valor_entrada:ent,valor_restante:rest,
+    forma_pagamento:document.getElementById('fFpag')?.value||'PIX',
+    parcelas:document.getElementById('fParc')?.value||'',
     responsavel:document.getElementById('fR')?.value||'JustHelp',
     descricao:document.getElementById('fDesc')?.value||'',
     proximo_contato:document.getElementById('fPC')?.value||null,
@@ -1245,6 +1331,7 @@ function renderDrTab(r,tab){
       ['Credor',r.credor||'—'],['Valor Dívida',r.valor_divida?'R$ '+Number(r.valor_divida).toLocaleString('pt-BR'):'—'],
       ['Negativado',r.elegibilidade||'—'],['Responsável',r.responsavel||'—'],
       ['Plano',r.plano||'Não definido','var(--gold2)'],
+      ['Forma Pagamento',(r.forma_pagamento||'PIX')+(r.parcelas?' — '+r.parcelas:''),'var(--blue)'],
       ['Entrada',r.valor_entrada?'R$ '+Number(r.valor_entrada).toLocaleString('pt-BR'):'R$ 0','var(--green2)'],
       ['Restante',r.valor_restante?'R$ '+Number(r.valor_restante).toLocaleString('pt-BR'):'R$ 0','var(--red2)'],
       ['Cadastrado por',r.cadastrado_por||'JustHelp','var(--teal)'],
@@ -1691,8 +1778,13 @@ function renderCSdocs(){
 }
 
 // ═══ COLABORADORES ═══
+function isAdmin(){ return currentUser?.role==='Administrador'||currentUser?.role==='admin'||currentUser?.email==='justhelpbr@gmail.com'; }
+
 async function loadColabs(){
   const grid=document.getElementById('colabGrid');if(!grid)return;
+  // Mostra botão só para admin
+  const btn=document.getElementById('btnNovoColab');
+  if(btn) btn.style.display=isAdmin()?'inline-flex':'none';
   try{
     const data=await sb('GET','colaboradores?order=created_at.desc');
     renderColabs(data||[]);
@@ -1707,11 +1799,14 @@ function renderColabs(colabs){
     +'<div style="font-size:.86rem;font-weight:700;margin-bottom:2px">'+c.nome+'</div>'
     +'<div style="font-size:.7rem;color:var(--textdim);margin-bottom:8px">'+c.email+'</div>'
     +'<div style="display:flex;align-items:center;justify-content:space-between"><span class="pill '+(c.role==='admin'?'p-ganho':'p-novo')+'">'+( ROLES[c.role]||c.role)+'</span>'
-    +'<button onclick="delColab(\''+c.id+'\',\''+c.email+'\')" style="font-size:.6rem;color:#FC8181;background:none;border:none;cursor:pointer">Remover</button>'
+    +(isAdmin()?'<button onclick="delColab(\''+c.id+'\',\''+c.email+'\')" style="font-size:.6rem;color:#FC8181;background:none;border:none;cursor:pointer">Remover</button>':'')
     +'</div></div>').join('');
 }
 
-function openNovoColab(){document.getElementById('cNome').value='';document.getElementById('cEmail').value='';document.getElementById('cSenha').value='';document.getElementById('cRole').value='assistente';document.getElementById('colabErr').textContent='';document.getElementById('modalColab').classList.add('open');}
+function openNovoColab(){
+  if(!isAdmin()){toast('Apenas administradores podem adicionar colaboradores','err');return;}
+  document.getElementById('cNome').value='';document.getElementById('cEmail').value='';document.getElementById('cSenha').value='';document.getElementById('cRole').value='assistente';document.getElementById('colabErr').textContent='';document.getElementById('modalColab').classList.add('open');
+}
 function closeColab(){document.getElementById('modalColab').classList.remove('open');}
 
 async function criarColab(){
@@ -1844,6 +1939,8 @@ window.addEventListener('DOMContentLoaded',()=>{
   const cs=localStorage.getItem('cs_token');if(cs)CS_TOKEN=cs;
   loadHist();
   checkSession();
+  // Auto-refresh a cada 2 minutos
+  setInterval(()=>{ if(currentUser){ loadData(); } }, 120000);
 });
 </script>
 </body>
