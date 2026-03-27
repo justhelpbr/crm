@@ -946,23 +946,23 @@ function initSupabase(){
   } catch(e){ return null; }
 }
 
-async function doLogin(){
-  const email = document.getElementById('loginEmail').value.trim();
+// Usuários com acesso ao CRM
+const CRM_USERS = [
+  {email:'justhelpbr@gmail.com', senha:'Just1230@', nome:'JustHelp Admin', role:'Administrador'},
+];
+
+function doLogin(){
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
   const pass  = document.getElementById('loginPass').value;
   const btn   = document.getElementById('loginBtn');
   const err   = document.getElementById('loginErr');
   if(!email||!pass){ err.textContent='Preencha e-mail e senha.'; return; }
-  btn.textContent='Entrando...'; btn.disabled=true; err.textContent='';
-  try{
-    if(!sbAuth) initSupabase();
-    const {data,error} = await sbAuth.auth.signInWithPassword({email,password:pass});
-    if(error) throw error;
-    currentUser = data.user;
-    onLoginSuccess(data.user);
-  } catch(e){
-    err.textContent = e.message==='Invalid login credentials'?'E-mail ou senha incorretos.':e.message;
-    btn.textContent='Entrar'; btn.disabled=false;
-  }
+  const user = CRM_USERS.find(u=>u.email===email && u.senha===pass);
+  if(!user){ err.textContent='E-mail ou senha incorretos.'; return; }
+  // Salva sessão no localStorage
+  localStorage.setItem('jh_session', JSON.stringify({email:user.email,nome:user.nome,role:user.role}));
+  currentUser = user;
+  onLoginSuccess(user);
 }
 
 function onLoginSuccess(user){
@@ -970,9 +970,8 @@ function onLoginSuccess(user){
   document.getElementById('loginBtn').textContent='Entrar';
   document.getElementById('loginBtn').disabled=false;
   document.getElementById('loginErr').textContent='';
-  // Update sidebar user info
-  const name = user.user_metadata?.nome || user.email.split('@')[0];
-  const role = user.user_metadata?.role || 'Assessoria Jurídica';
+  const name = user.nome || user.email?.split('@')[0] || 'JustHelp';
+  const role = user.role || 'Assessoria Jurídica';
   const initials = name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
   document.getElementById('sbAv').textContent = initials;
   document.getElementById('sbUname').textContent = name;
@@ -980,31 +979,27 @@ function onLoginSuccess(user){
   loadData();
 }
 
-async function doLogout(){
-  if(!sbAuth) return;
-  await sbAuth.auth.signOut();
+function doLogout(){
+  localStorage.removeItem('jh_session');
   currentUser = null;
   document.getElementById('loginScreen').classList.remove('hidden');
   document.getElementById('loginEmail').value='';
   document.getElementById('loginPass').value='';
   closeUserMenu();
-  // Clear data
   recs=[];renderAll();
 }
 
-async function checkSession(){
-  if(!sbAuth) { initSupabase(); }
-  try{
-    const {data} = await sbAuth.auth.getSession();
-    if(data?.session?.user){
-      currentUser = data.session.user;
-      onLoginSuccess(data.session.user);
-    } else {
-      document.getElementById('loginScreen').classList.remove('hidden');
-    }
-  } catch(e){
-    document.getElementById('loginScreen').classList.remove('hidden');
+function checkSession(){
+  const saved = localStorage.getItem('jh_session');
+  if(saved){
+    try{
+      const user = JSON.parse(saved);
+      currentUser = user;
+      onLoginSuccess(user);
+      return;
+    } catch(e){}
   }
+  document.getElementById('loginScreen').classList.remove('hidden');
 }
 
 // ══════════════════════════════════════
