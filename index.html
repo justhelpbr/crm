@@ -380,6 +380,27 @@ tr:hover .td-acts{opacity:1}
 .upload-zone-icon{font-size:2rem;margin-bottom:8px;opacity:.5}
 .upload-zone-txt{font-size:.8rem;color:var(--text-dim)}
 
+
+/* ── KANBAN DRAG & DROP ── */
+.kc{position:relative;user-select:none}
+.kc-drag-handle{
+  position:absolute;top:8px;right:8px;
+  font-size:.7rem;color:var(--text-dim);
+  cursor:grab;line-height:1;letter-spacing:-1px;
+  opacity:0;transition:opacity .15s;
+}
+.kc:hover .kc-drag-handle{opacity:1}
+.kc.kc-dragging{opacity:.4;transform:scale(.97);box-shadow:none}
+.kb-col.kb-over{border-color:var(--teal);background:rgba(0,180,162,.04)}
+.kb-cards.kb-cards-over{background:rgba(0,180,162,.06);border-radius:var(--r-sm);min-height:60px}
+.kb-empty-drop{
+  text-align:center;padding:20px 10px;
+  font-size:.7rem;color:var(--text-dim);opacity:.5;
+  border:2px dashed var(--border);border-radius:var(--r-sm);
+  margin:4px;transition:.2s;
+}
+.kb-cards-over .kb-empty-drop{border-color:var(--teal);color:var(--teal);opacity:.8}
+
 </style>
 </head>
 <body>
@@ -891,22 +912,93 @@ function renderKb(){
     const colR=recs.filter(r=>r.estagio===col);
     const tv=colR.reduce((s,r)=>s+(PVALS[r.plano]||0),0);
     const color=ECLR[col]||'#555';
-    return`<div class="kb-col">
+    return`<div class="kb-col" data-col="${col}" 
+      ondragover="kbDragOver(event)" 
+      ondrop="kbDrop(event,'${col}')"
+      ondragleave="kbDragLeave(event)">
       <div class="kb-head">
         <div class="kb-ttl"><div class="kb-dot" style="background:${color}"></div>${col}</div>
-        <div style="display:flex;align-items:center;gap:5px"><div class="kb-cnt">${colR.length}</div>${tv?`<span style="font-size:.6rem;color:var(--text-dim)">R$${tv.toLocaleString('pt-BR')}</span>`:''}</div>
+        <div style="display:flex;align-items:center;gap:5px">
+          <div class="kb-cnt">${colR.length}</div>
+          ${tv?`<span style="font-size:.6rem;color:var(--text-dim)">R$${tv.toLocaleString('pt-BR')}</span>`:''}
+        </div>
       </div>
-      <div class="kb-cards">
-        ${!colR.length?'<div style="text-align:center;padding:18px;font-size:.7rem;color:var(--text-dim);opacity:.6">Sem negócios</div>':''}
-        ${colR.map(r=>`<div class="kc" onclick="openDet('${r.id}')">
-          <div class="kc-top"><div class="kc-name">${r.nome}</div><span class="kc-src ${fClass(r.fonte)}">${sfonte(r.fonte)}</span></div>
-          <div class="kc-phone">${fp(r.telefone||r.whatsapp)}</div>
-          <div class="kc-bottom"><div class="kc-val">${r.plano?'R$'+(PVALS[r.plano]||0).toLocaleString('pt-BR'):''}</div><div style="display:flex;align-items:center;gap:5px"><div class="kc-date">${fd(r.created_at)}</div><div class="kc-av">${(r.responsavel||'?').split(' ').map(w=>w[0]).slice(0,2).join('')}</div></div></div>
-        </div>`).join('')}
+      <div class="kb-cards" data-col="${col}">
+        ${!colR.length?'<div class="kb-empty-drop" data-col="'+col+'">Solte aqui</div>':''}
+        ${colR.map(r=>`
+          <div class="kc" 
+            draggable="true"
+            data-id="${r.id}"
+            ondragstart="kbDragStart(event,'${r.id}')"
+            ondragend="kbDragEnd(event)"
+            onclick="openDet('${r.id}')">
+            <div class="kc-drag-handle">⋮⋮</div>
+            <div class="kc-top"><div class="kc-name">${r.nome}</div><span class="kc-src ${fClass(r.fonte)}">${sfonte(r.fonte)}</span></div>
+            <div class="kc-phone">${fp(r.telefone||r.whatsapp)}</div>
+            <div class="kc-bottom">
+              <div class="kc-val">${r.plano?'R$'+(PVALS[r.plano]||0).toLocaleString('pt-BR'):''}</div>
+              <div style="display:flex;align-items:center;gap:5px">
+                <div class="kc-date">${fd(r.created_at)}</div>
+                <div class="kc-av">${(r.responsavel||'?').split(' ').map(w=>w[0]).slice(0,2).join('')}</div>
+              </div>
+            </div>
+          </div>`).join('')}
       </div>
     </div>`;
   }).join('');
 }
+
+// ── KANBAN DRAG & DROP ──
+let dragId = null;
+
+function kbDragStart(e, id){
+  dragId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', id);
+  setTimeout(()=> e.target.classList.add('kc-dragging'), 0);
+}
+
+function kbDragEnd(e){
+  e.target.classList.remove('kc-dragging');
+  document.querySelectorAll('.kb-col').forEach(c=>c.classList.remove('kb-over'));
+  document.querySelectorAll('.kb-cards').forEach(c=>c.classList.remove('kb-cards-over'));
+  dragId = null;
+}
+
+function kbDragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const col = e.currentTarget;
+  document.querySelectorAll('.kb-col').forEach(c=>c.classList.remove('kb-over'));
+  col.classList.add('kb-over');
+  const cards = col.querySelector('.kb-cards');
+  if(cards) cards.classList.add('kb-cards-over');
+}
+
+function kbDragLeave(e){
+  if(!e.currentTarget.contains(e.relatedTarget)){
+    e.currentTarget.classList.remove('kb-over');
+    const cards = e.currentTarget.querySelector('.kb-cards');
+    if(cards) cards.classList.remove('kb-cards-over');
+  }
+}
+
+async function kbDrop(e, novoEstagio){
+  e.preventDefault();
+  const id = e.dataTransfer.getData('text/plain') || dragId;
+  if(!id) return;
+  const r = recs.find(x=>x.id===id);
+  if(!r || r.estagio === novoEstagio) return;
+
+  const estagioAntigo = r.estagio;
+  await upsert({...r, estagio: novoEstagio, updated_at: new Date().toISOString()});
+  addHistorico('estagio_mudou', `<strong>${r.nome}</strong>: ${estagioAntigo} → ${novoEstagio}`);
+  renderAll();
+  toast(`${r.nome} → ${novoEstagio}`, 'ok');
+  
+  document.querySelectorAll('.kb-col').forEach(c=>c.classList.remove('kb-over'));
+}
+
 
 function openNew(){
   editId=null;
