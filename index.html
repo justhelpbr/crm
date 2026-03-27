@@ -279,6 +279,107 @@ tr:hover .td-acts{opacity:1}
 .colab-admin{background:var(--red-g);color:var(--red2)}
 .colab-assist{background:rgba(59,130,246,.12);color:#60A5FA}
 
+
+/* ── AGENDA ── */
+.agenda-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;padding:16px}
+.agenda-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;transition:.2s}
+.agenda-card:hover{border-color:var(--border2)}
+.agenda-card.urgente{border-left:3px solid var(--red2)}
+.agenda-card.hoje{border-left:3px solid var(--gold2)}
+.agenda-card.futuro{border-left:3px solid var(--blue)}
+.agenda-nome{font-size:.84rem;font-weight:700;margin-bottom:3px}
+.agenda-data{font-size:.7rem;color:var(--text-dim);margin-bottom:8px}
+.agenda-desc{font-size:.74rem;color:var(--text-mid);line-height:1.5;margin-bottom:10px}
+.agenda-actions{display:flex;gap:6px}
+
+/* ── RELATÓRIO ── */
+.rel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 16px 0}
+.rel-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.rel-ttl{font-family:"Syne",sans-serif;font-size:.8rem;font-weight:700;margin-bottom:14px}
+.rel-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:.76rem}
+.rel-row:last-child{border:none}
+.rel-name{display:flex;align-items:center;gap:8px;color:var(--text-mid)}
+.rel-val{font-weight:700}
+.bar-wrap{width:100%;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden;margin-top:6px}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s}
+
+/* ── META MENSAL ── */
+.meta-wrap{padding:16px}
+.meta-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:12px}
+.meta-ttl{font-family:"Syne",sans-serif;font-size:.9rem;font-weight:700;margin-bottom:4px}
+.meta-sub{font-size:.72rem;color:var(--text-dim);margin-bottom:16px}
+.meta-progress{height:16px;background:var(--bg4);border-radius:8px;overflow:hidden;margin-bottom:8px;position:relative}
+.meta-bar{height:100%;border-radius:8px;background:linear-gradient(90deg,var(--red),var(--gold2));transition:width .8s ease}
+.meta-pct{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:.6rem;font-weight:800;color:#fff}
+.meta-nums{display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-dim)}
+.meta-val{font-size:1rem;font-weight:800;font-family:"Syne",sans-serif}
+.meta-input-row{display:flex;align-items:center;gap:10px;margin-top:12px}
+.meta-input-row input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 12px;color:#E2E8F0;font-size:.82rem}
+.meta-input-row button{padding:8px 16px;background:var(--red);color:#fff;border:none;border-radius:var(--r-sm);font-size:.76rem;font-weight:700;cursor:pointer}
+.mes-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.mes-card{background:var(--bg3);border-radius:var(--r-sm);padding:14px;text-align:center}
+.mes-nome{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:6px}
+.mes-valor{font-family:"Syne",sans-serif;font-size:1.2rem;font-weight:800;color:var(--green2)}
+.mes-cnt{font-size:.66rem;color:var(--text-dim)}
+
+/* ── FUNIL CONVERSÃO ── */
+.funil-wrap{padding:16px}
+.funil-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:12px}
+.funil-stage{display:flex;align-items:center;gap:12px;margin-bottom:10px;position:relative}
+.funil-bar-outer{flex:1;height:36px;background:var(--bg4);border-radius:6px;overflow:hidden;position:relative}
+.funil-bar-inner{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:12px;font-size:.72rem;font-weight:700;color:#fff;transition:width .8s ease;min-width:40px}
+.funil-pct{font-size:.7rem;font-weight:700;min-width:48px;text-align:right}
+.funil-lbl{font-size:.72rem;color:var(--text-mid);min-width:160px}
+.conv-arrow{text-align:center;font-size:.7rem;color:var(--text-dim);margin:-4px 0 6px 172px}
+
+/* ── HISTÓRICO ── */
+.hist-list{padding:16px;display:flex;flex-direction:column;gap:8px}
+.hist-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;display:flex;align-items:flex-start;gap:10px}
+.hist-icon{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0}
+.hist-info{flex:1}
+.hist-txt{font-size:.78rem;color:var(--text-mid);line-height:1.5}
+.hist-txt strong{color:#E2E8F0}
+.hist-meta{font-size:.62rem;color:var(--text-dim);margin-top:3px}
+
+/* ── CONTRATO ── */
+.contrato-wrap{padding:16px;max-width:700px}
+.contrato-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:14px}
+.contrato-lead-sel{display:flex;gap:10px;margin-bottom:16px}
+.contrato-lead-sel select{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;color:#E2E8F0;font-size:.82rem}
+.contrato-preview{background:var(--bg3);border-radius:var(--r-sm);padding:20px;font-size:.8rem;line-height:1.9;color:var(--text-mid);white-space:pre-wrap;margin-bottom:14px;max-height:400px;overflow-y:auto}
+.contrato-preview strong{color:#E2E8F0}
+
+/* ── LEADS PARADOS ── */
+.parado-card{background:var(--bg2);border:1px solid rgba(192,57,43,.3);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.parado-dias{min-width:52px;text-align:center;background:var(--red-g);color:var(--red2);border-radius:var(--r-sm);padding:6px 4px;font-family:"Syne",sans-serif;font-size:1rem;font-weight:800}
+.parado-sub{font-size:.58rem;color:var(--red2);display:block;text-align:center}
+.parado-info{flex:1}
+.parado-nome{font-size:.82rem;font-weight:700;margin-bottom:2px}
+.parado-det{font-size:.68rem;color:var(--text-dim)}
+
+/* ── MAPA ── */
+.mapa-wrap{padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.mapa-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.estado-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:.76rem}
+.estado-row:last-child{border:none}
+.estado-sigla{width:36px;height:28px;background:var(--bg4);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:800;color:var(--text-mid);flex-shrink:0}
+.estado-name{flex:1;color:var(--text-mid)}
+.estado-bar-w{width:80px;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.estado-bar-f{height:100%;border-radius:3px;background:var(--red)}
+.estado-cnt{font-weight:700;min-width:24px;text-align:right}
+
+/* ── DOCS UPLOAD ── */
+.docs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:12px}
+.doc-card{background:var(--bg3);border:1px dashed var(--border2);border-radius:var(--r-sm);padding:14px;text-align:center;cursor:pointer;transition:.2s}
+.doc-card:hover{border-color:var(--teal);background:rgba(0,180,162,.05)}
+.doc-icon{font-size:1.8rem;margin-bottom:8px}
+.doc-name{font-size:.76rem;font-weight:600;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doc-size{font-size:.64rem;color:var(--text-dim)}
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--r);padding:32px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:14px}
+.upload-zone:hover{border-color:var(--teal);background:rgba(0,180,162,.04)}
+.upload-zone-icon{font-size:2rem;margin-bottom:8px;opacity:.5}
+.upload-zone-txt{font-size:.8rem;color:var(--text-dim)}
+
 </style>
 </head>
 <body>
@@ -328,9 +429,57 @@ tr:hover .td-acts{opacity:1}
     <button class="sb-btn" onclick="goV('kanban',this)">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="18"/><rect x="10" y="3" width="5" height="12"/><rect x="17" y="3" width="5" height="15"/></svg>Kanban
     </button>
+    <div class="sb-sec">Gestão</div>
+    <button class="sb-btn" onclick="goV('agenda',this)">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Agenda
+      <span class="sb-badge red" id="sbAgenda">0</span>
+    </button>
+    <button class="sb-btn" onclick="goV('parados',this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Leads Parados
+      <span class="sb-badge red" id="sbParados">0</span>
+    </button>
+    <button class="sb-btn" onclick="goV('meta',this)">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Meta & Receita
+    </button>
+    <button class="sb-btn" onclick="goV('funil',this)">
+      <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>Funil de Conversão
+    </button>
+    <button class="sb-btn" onclick="goV('mapa',this)">
+      <svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>Mapa de Leads
+    </button>
+    <button class="sb-btn" onclick="goV('historico',this)">
+      <svg viewBox="0 0 24 24"><path d="M3 3h18v18H3z" fill="none"/><polyline points="3 9 12 3 21 9"/><path d="M9 22V12h6v10"/></svg>Histórico
+    </button>
+    <button class="sb-btn" onclick="goV('contrato',this)">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Contrato Digital
+    </button>
     <div class="sb-sec">Sistema</div>
     <button class="sb-btn" onclick="goV('colaboradores',this)">
       <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg>Colaboradores
+    </button>
+    <div class="sb-sec">Gestão</div>
+    <button class="sb-btn" onclick="goV('agenda',this)">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Agenda
+      <span class="sb-badge red" id="sbAgenda">0</span>
+    </button>
+    <button class="sb-btn" onclick="goV('parados',this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Leads Parados
+      <span class="sb-badge red" id="sbParados">0</span>
+    </button>
+    <button class="sb-btn" onclick="goV('meta',this)">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Meta & Receita
+    </button>
+    <button class="sb-btn" onclick="goV('funil',this)">
+      <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>Funil de Conversão
+    </button>
+    <button class="sb-btn" onclick="goV('mapa',this)">
+      <svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>Mapa de Leads
+    </button>
+    <button class="sb-btn" onclick="goV('historico',this)">
+      <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.45"/></svg>Histórico
+    </button>
+    <button class="sb-btn" onclick="goV('contrato',this)">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Contrato Digital
     </button>
     <button class="sb-btn" onclick="goV('config',this)">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>Configurações
@@ -486,16 +635,25 @@ tr:hover .td-acts{opacity:1}
           <div class="sql-box">CREATE TABLE IF NOT EXISTS leads (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   nome text NOT NULL,
+  cpf text, rg text,
+  data_nascimento date,
+  nacionalidade text DEFAULT 'Brasileiro(a)',
+  estado_civil text, profissao text,
+  email text,
+  cep text, endereco text, cidade text, uf text,
+  credor text, valor_divida numeric,
   telefone text, whatsapp text,
-  fonte text DEFAULT 'SDR WhatsApp',
-  elegibilidade text,
+  fonte text, elegibilidade text,
   status text DEFAULT 'Novo Lead',
   estagio text DEFAULT 'Proposta de preco',
   plano text, valor_entrada numeric, valor_restante numeric,
   responsavel text DEFAULT 'JustHelp',
+  cadastrado_por text DEFAULT 'JustHelp',
+  proximo_contato date, obs_agenda text,
   descricao text,
   notas jsonb DEFAULT '[]',
   chamadas jsonb DEFAULT '[]',
+  updated_at timestamptz DEFAULT now(),
   created_at timestamptz DEFAULT now()
 );
 ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
@@ -622,7 +780,13 @@ async function del(id){
   catch(e){toast('Erro ao remover','err');}
 }
 
-function renderAll(){renderDash();renderTbl();renderKb();updBadges();}
+function renderAll(){
+  renderDash();renderTbl();renderKb();updBadges();
+  renderAgenda();renderParados();
+  if(curV==='meta') renderMeta();
+  if(curV==='funil') renderFunil();
+  if(curV==='mapa') renderMapa();
+}
 
 function renderDash(){
   const total=recs.length;
@@ -766,17 +930,55 @@ function openEdit(id){
 function selOpts(arr,val){return arr.map(a=>`<option${a===val?' selected':''}>${a}</option>`).join('');}
 
 function formHtml(r){return`
+  <div style="font-size:.62rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">👤 Dados Pessoais</div>
   <div class="fg-2">
-    <div class="fg"><label>Nome *</label><input id="fN" value="${r.nome||''}" placeholder="Nome completo"></div>
+    <div class="fg"><label>Nome Completo *</label><input id="fN" value="${r.nome||''}" placeholder="Nome completo"></div>
     <div class="fg"><label>Responsável</label><select id="fR">${selOpts(RESPS,r.responsavel||'JustHelp')}</select></div>
   </div>
+  <div class="fg-2">
+    <div class="fg"><label>CPF</label><input id="fCPF" value="${r.cpf||''}" placeholder="000.000.000-00"></div>
+    <div class="fg"><label>RG</label><input id="fRG" value="${r.rg||''}" placeholder="00.000.000-0"></div>
+  </div>
+  <div class="fg-2">
+    <div class="fg"><label>Data de Nascimento</label><input type="date" id="fDN" value="${r.data_nascimento||''}"></div>
+    <div class="fg"><label>Nacionalidade</label><input id="fNac" value="${r.nacionalidade||'Brasileiro(a)'}" placeholder="Ex: Brasileiro(a)"></div>
+  </div>
+  <div class="fg-2">
+    <div class="fg"><label>Estado Civil</label><select id="fEC">
+      <option value="">Não informado</option>
+      ${['Solteiro(a)','Casado(a)','Divorciado(a)','Viúvo(a)','União Estável'].map(a=>'<option'+(a===r.estado_civil?' selected':'')+'>'+a+'</option>').join('')}
+    </select></div>
+    <div class="fg"><label>Profissão</label><input id="fProf" value="${r.profissao||''}" placeholder="Ex: Comerciante"></div>
+  </div>
+  <div style="font-size:.62rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin:14px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">📱 Contato</div>
   <div class="fg-2">
     <div class="fg"><label>Telefone</label><input id="fT" value="${r.telefone||''}" placeholder="(11) 99999-9999"></div>
     <div class="fg"><label>WhatsApp</label><input id="fW" value="${r.whatsapp||''}" placeholder="(11) 99999-9999"></div>
   </div>
+  <div class="fg"><label>E-mail</label><input type="email" id="fEmail" value="${r.email||''}" placeholder="cliente@email.com"></div>
+  <div style="font-size:.62rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin:14px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">🏠 Endereço</div>
+  <div class="fg-2">
+    <div class="fg"><label>CEP</label><input id="fCEP" value="${r.cep||''}" placeholder="00000-000" oninput="buscaCEP(this.value)"></div>
+    <div class="fg"><label>Endereço</label><input id="fEndr" value="${r.endereco||''}" placeholder="Rua, número, complemento"></div>
+  </div>
+  <div class="fg-2">
+    <div class="fg"><label>Cidade</label><input id="fCid" value="${r.cidade||''}" placeholder="Ex: São Paulo"></div>
+    <div class="fg"><label>UF</label><select id="fUF">
+      <option value="">UF</option>
+      ${['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(a=>'<option'+(a===r.uf?' selected':'')+'>'+a+'</option>').join('')}
+    </select></div>
+  </div>
+  <div style="font-size:.62rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin:14px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">⚖️ Processo</div>
   <div class="fg-2">
     <div class="fg"><label>Fonte</label><select id="fFt"><option value="">Selecione...</option>${['Meta ADS Whatsapp','Instagram','SDR WhatsApp','Meta Ads','Campanha Ademir','Indicacao','Google Ads'].map(a=>`<option${a===r.fonte?' selected':''}>${a}</option>`).join('')}</select></div>
-    <div class="fg"><label>Elegibilidade</label><input id="fEl" value="${r.elegibilidade||''}" placeholder="Ex: Serasa, SCPC"></div>
+    <div class="fg"><label>Negativado em</label><select id="fEl">
+      <option value="">Selecione...</option>
+      ${['Serasa','SCPC','Serasa e SCPC','Boa Vista','Serasa, SCPC e Boa Vista'].map(a=>'<option'+(a===r.elegibilidade?' selected':'')+'>'+a+'</option>').join('')}
+    </select></div>
+  </div>
+  <div class="fg-2">
+    <div class="fg"><label>Credor Principal</label><input id="fCred" value="${r.credor||''}" placeholder="Ex: Banco Itaú, Claro"></div>
+    <div class="fg"><label>Valor da Dívida (R$)</label><input type="number" id="fDivida" value="${r.valor_divida||''}" placeholder="Ex: 25000"></div>
   </div>
   <div class="fg-2">
     <div class="fg"><label>Situação (Lead)</label><select id="fSt">${selOpts(LSTATUS,r.status||'Novo Lead')}</select></div>
@@ -819,8 +1021,29 @@ function renderDrTab(r,tab){
 
   let body='';
   if(tab==='info'){
-    body=`<div class="det-grid">
+    body=`<div<div class="det-grid">
+      <div class="det-item"><div class="det-lbl">CPF</div><div class="det-val">${r.cpf||'—'}</div></div>
+      <div class="det-item"><div class="det-lbl">RG</div><div class="det-val">${r.rg||'—'}</div></div>
+      <div class="det-item"><div class="det-lbl">Nascimento</div><div class="det-val">${r.data_nascimento?new Date(r.data_nascimento+'T12:00:00').toLocaleDateString('pt-BR'):'—'}</div></div>
+      <div class="det-item"><div class="det-lbl">Estado Civil</div><div class="det-val">${r.estado_civil||'—'}</div></div>
+      <div class="det-item"><div class="det-lbl">Profissão</div><div class="det-val">${r.profissao||'—'}</div></div>
+      <div class="det-item"><div class="det-lbl">Nacionalidade</div><div class="det-val">${r.nacionalidade||'—'}</div></div>
       <div class="det-item"><div class="det-lbl">Telefone</div><div class="det-val">${fp(r.telefone)||'—'}</div></div>
+      <div class="det-item"><div class="det-lbl">WhatsApp</div><div class="det-val">${fp(r.whatsapp)||'—'}</div></div>
+      <div class="det-item"><div class="det-lbl">E-mail</div><div class="det-val">${r.email||'—'}</div></div>
+      <div class="det-item"><div class="det-lbl">Endereço</div><div class="det-val">${r.endereco||'—'}</div></div>
+      <div class="det-item"><div class="det-lbl">Cidade/UF</div><div class="det-val">${[r.cidade,r.uf].filter(Boolean).join('/')||'—'}</div></div>
+      <div class="det-item"><div class="det-lbl">CEP</div><div class="det-val">${r.cep||'—'}</div></div>
+      <div class="det-item"><div class="det-lbl">Credor</div><div class="det-val">${r.credor||'—'}</div></div>
+      <div class="det-item"><div class="det-lbl">Valor Dívida</div><div class="det-val" style="color:#FC8181">${r.valor_divida?'R$ '+Number(r.valor_divida).toLocaleString('pt-BR'):'—'}</div></div>
+      <div class="det-item"><div class="det-lbl">Negativado em</div><div class="det-val">${r.elegibilidade||'—'}</div></div>
+      <div class="det-item"><div class="det-lbl">Responsável</div><div class="det-val">${r.responsavel||'—'}</div></div>
+      <div class="det-item"><div class="det-lbl">Plano</div><div class="det-val" style="color:var(--gold2)">${r.plano||'Não definido'}</div></div>
+      <div class="det-item"><div class="det-lbl">Entrada Paga</div><div class="det-val" style="color:var(--green2)">${r.valor_entrada?'R$ '+Number(r.valor_entrada).toLocaleString('pt-BR'):'R$ 0'}</div></div>
+      <div class="det-item"><div class="det-lbl">Restante</div><div class="det-val" style="color:var(--red2)">${r.valor_restante?'R$ '+Number(r.valor_restante).toLocaleString('pt-BR'):'R$ 0'}</div></div>
+      <div class="det-item"><div class="det-lbl">Criado em</div><div class="det-val">${fd(r.created_at)}</div></div>
+      <div class="det-item"><div class="det-lbl">Cadastrado por</div><div class="det-val" style="color:var(--teal)">${r.cadastrado_por||'JustHelp'}</div></div>
+    </div>
       <div class="det-item"><div class="det-lbl">WhatsApp</div><div class="det-val">${fp(r.whatsapp)||'—'}</div></div>
       <div class="det-item"><div class="det-lbl">Elegibilidade</div><div class="det-val">${r.elegibilidade||'—'}</div></div>
       <div class="det-item"><div class="det-lbl">Responsável</div><div class="det-val">${r.responsavel||'—'}</div></div>
@@ -889,11 +1112,18 @@ function goV(v,btn){
   document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));btn?.classList.add('active');
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
   document.getElementById('view-'+v)?.classList.add('active');
-  const ttls={dashboard:'Página Inicial',leads:'Clientes Potenciais',negocios:'Negócios',kanban:'Kanban',colaboradores:'Colaboradores',config:'Configurações'};
+  const ttls={dashboard:'Página Inicial',leads:'Clientes Potenciais',negocios:'Negócios',kanban:'Kanban',colaboradores:'Colaboradores',agenda:'Agenda de Contatos',parados:'Leads Parados',meta:'Meta & Receita',funil:'Funil de Conversão',mapa:'Mapa de Leads',historico:'Histórico',contrato:'Contrato Digital',config:'Configurações'};
   document.getElementById('pgTtl').textContent=ttls[v]||v;
   document.getElementById('newLbl').textContent=v==='negocios'?'Criar Negócio':'Novo Lead';
   document.getElementById('stLeads').style.display=v==='leads'?'flex':'none';
   if(v==='colaboradores') loadColabs();
+  if(v==='agenda') renderAgenda();
+  if(v==='parados') renderParados();
+  if(v==='meta') renderMeta();
+  if(v==='funil') renderFunil();
+  if(v==='mapa') renderMapa();
+  if(v==='historico') renderHistorico();
+  if(v==='contrato'){ renderContratoLeads(); }
   document.getElementById('stNegs').style.display=v==='negocios'?'flex':'none';
   document.getElementById('toolbar').style.display=['leads','negocios'].includes(v)?'flex':'none';
   const selSt=document.getElementById('selSt');
@@ -1108,10 +1338,693 @@ function toggleUserMenu(){ document.getElementById('userMenu').classList.toggle(
 function closeUserMenu(){ document.getElementById('userMenu').classList.remove('open'); }
 document.addEventListener('click', e=>{ if(!e.target.closest('.user-menu-wrap')) closeUserMenu(); });
 
+
+// ═══════════════════════════════════════
+// AGENDA
+// ═══════════════════════════════════════
+let agendaFiltro = 'todos';
+
+function filterAgenda(f, btn){
+  agendaFiltro = f;
+  document.querySelectorAll('#view-agenda .stab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAgenda();
+}
+
+function renderAgenda(){
+  const grid = document.getElementById('agendaGrid');
+  if(!grid) return;
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  
+  let leadsComAgenda = recs.filter(r => r.proximo_contato);
+  
+  if(agendaFiltro === 'hoje'){
+    leadsComAgenda = leadsComAgenda.filter(r => {
+      const d = new Date(r.proximo_contato); d.setHours(0,0,0,0);
+      return d.getTime() === hoje.getTime();
+    });
+  } else if(agendaFiltro === 'atrasados'){
+    leadsComAgenda = leadsComAgenda.filter(r => {
+      const d = new Date(r.proximo_contato); d.setHours(0,0,0,0);
+      return d < hoje;
+    });
+  }
+
+  leadsComAgenda.sort((a,b) => new Date(a.proximo_contato) - new Date(b.proximo_contato));
+
+  if(!leadsComAgenda.length){
+    grid.innerHTML = '<div class="empty-st" style="grid-column:1/-1"><div class="ei">📅</div><div>Nenhum contato agendado</div></div>';
+    return;
+  }
+
+  grid.innerHTML = leadsComAgenda.map(r => {
+    const d = new Date(r.proximo_contato); d.setHours(0,0,0,0);
+    const diff = Math.round((d - hoje) / 86400000);
+    const cls = diff < 0 ? 'urgente' : diff === 0 ? 'hoje' : 'futuro';
+    const label = diff < 0 ? `${Math.abs(diff)}d atrasado` : diff === 0 ? 'Hoje' : `em ${diff}d`;
+    const waNum = (r.whatsapp||r.telefone||'').replace(/\D/g,'');
+    return `<div class="agenda-card ${cls}">
+      <div class="agenda-nome">${r.nome}</div>
+      <div class="agenda-data">📅 ${new Date(r.proximo_contato).toLocaleDateString('pt-BR')} — <strong style="color:${diff<0?'var(--red2)':diff===0?'var(--gold2)':'var(--blue)'}">${label}</strong></div>
+      ${r.obs_agenda?`<div class="agenda-desc">${r.obs_agenda}</div>`:''}
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px"><span class="pill ${sClass(r.status)}">${r.status}</span></div>
+      <div class="agenda-actions">
+        ${waNum?`<button class="btn-new" style="padding:6px 12px;font-size:.7rem" onclick="openWA('${waNum}')">WhatsApp</button>`:''}
+        <button class="btn-cancel" style="padding:6px 12px;font-size:.7rem" onclick="openDet('${r.id}')">Ver Lead</button>
+        <button class="btn-cancel" style="padding:6px 12px;font-size:.7rem;margin-left:auto;color:var(--red2)" onclick="limparAgenda('${r.id}')">✓ Feito</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Update badge
+  const atrasados = recs.filter(r => {
+    if(!r.proximo_contato) return false;
+    const d = new Date(r.proximo_contato); d.setHours(0,0,0,0);
+    return d <= hoje;
+  }).length;
+  const el = document.getElementById('sbAgenda');
+  if(el){ el.textContent = atrasados; el.style.display = atrasados ? 'inline' : 'none'; }
+}
+
+async function limparAgenda(id){
+  await upsert({...recs.find(r=>r.id===id), proximo_contato:'', obs_agenda:''});
+  renderAgenda();
+  toast('Contato marcado como feito','ok');
+}
+
+// ═══════════════════════════════════════
+// LEADS PARADOS
+// ═══════════════════════════════════════
+function renderParados(){
+  const grid = document.getElementById('paradosGrid');
+  if(!grid) return;
+  const dias = Number(document.getElementById('paradosDias')?.value || 5);
+  const limite = new Date(); limite.setDate(limite.getDate() - dias);
+  
+  const parados = recs.filter(r => {
+    if(['Ganho fechado','Cancelado','Congelado','Nome Limpo'].includes(r.estagio)) return false;
+    const ultima = r.updated_at || r.created_at;
+    return new Date(ultima) < limite;
+  }).sort((a,b) => new Date(a.updated_at||a.created_at) - new Date(b.updated_at||b.created_at));
+
+  const el = document.getElementById('sbParados');
+  if(el){ el.textContent = parados.length; el.style.display = parados.length ? 'inline' : 'none'; }
+
+  if(!parados.length){
+    grid.innerHTML = '<div class="empty-st"><div class="ei">✅</div><div>Nenhum lead parado</div><div style="font-size:.74rem">Todos os leads estão sendo atendidos!</div></div>';
+    return;
+  }
+
+  grid.innerHTML = parados.map(r => {
+    const ultima = new Date(r.updated_at||r.created_at);
+    const diasP = Math.floor((new Date() - ultima) / 86400000);
+    const waNum = (r.whatsapp||r.telefone||'').replace(/\D/g,'');
+    return `<div class="parado-card">
+      <div class="parado-dias">${diasP}<span class="parado-sub">dias</span></div>
+      <div class="parado-info">
+        <div class="parado-nome">${r.nome}</div>
+        <div class="parado-det">${r.estagio||'—'} • ${r.responsavel||'—'} • ${r.fonte||'—'}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        ${waNum?`<button class="act wa" onclick="openWA('${waNum}')" title="WhatsApp"><svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none;width:12px;height:12px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>`:''}
+        <button class="act" onclick="openDet('${r.id}')" title="Ver"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// META & RECEITA
+// ═══════════════════════════════════════
+function salvarMeta(){
+  const val = Number(document.getElementById('metaInput')?.value);
+  if(!val){ toast('Digite um valor válido','err'); return; }
+  const mes = new Date().toISOString().slice(0,7);
+  localStorage.setItem('jh_meta_'+mes, val);
+  renderMeta();
+  toast('Meta salva!','ok');
+}
+
+function renderMeta(){
+  const mes = new Date().toISOString().slice(0,7);
+  const meta = Number(localStorage.getItem('jh_meta_'+mes)||0);
+  const input = document.getElementById('metaInput');
+  if(input && meta) input.value = meta;
+
+  // Receita do mês atual
+  const receitaMes = recs
+    .filter(r => (r.created_at||'').startsWith(mes) && r.valor_entrada)
+    .reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
+
+  const pct = meta ? Math.min(100, Math.round(receitaMes/meta*100)) : 0;
+  const bar = document.getElementById('metaBar');
+  const pctEl = document.getElementById('metaPct');
+  const atual = document.getElementById('metaAtual');
+  const alvo = document.getElementById('metaAlvo');
+  const sub = document.getElementById('metaSubtitle');
+
+  if(bar) bar.style.width = pct+'%';
+  if(pctEl) pctEl.textContent = pct+'%';
+  if(atual) atual.textContent = 'R$ '+receitaMes.toLocaleString('pt-BR')+' alcançado';
+  if(alvo) alvo.textContent = 'Meta: R$ '+(meta||0).toLocaleString('pt-BR');
+  if(sub) sub.textContent = `${new Date().toLocaleDateString('pt-BR',{month:'long',year:'numeric'})} — ${pct}% da meta atingida`;
+
+  // Histórico de meses
+  const mesesMap = {};
+  recs.forEach(r => {
+    if(!r.created_at || !r.valor_entrada) return;
+    const m = r.created_at.slice(0,7);
+    mesesMap[m] = (mesesMap[m]||{total:0,cnt:0});
+    mesesMap[m].total += Number(r.valor_entrada)||0;
+    mesesMap[m].cnt++;
+  });
+
+  const mesCards = document.getElementById('mesCards');
+  if(mesCards){
+    const sorted = Object.entries(mesesMap).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,6);
+    mesCards.innerHTML = sorted.length ? sorted.map(([m,v])=>{
+      const d = new Date(m+'-01');
+      return `<div class="mes-card">
+        <div class="mes-nome">${d.toLocaleDateString('pt-BR',{month:'short',year:'numeric'})}</div>
+        <div class="mes-valor">R$ ${v.total.toLocaleString('pt-BR')}</div>
+        <div class="mes-cnt">${v.cnt} entrada${v.cnt!==1?'s':''}</div>
+      </div>`;
+    }).join('') : '<div style="color:var(--text-dim);font-size:.76rem;text-align:center;padding:20px">Nenhuma entrada registrada ainda</div>';
+  }
+}
+
+// ═══════════════════════════════════════
+// FUNIL DE CONVERSÃO
+// ═══════════════════════════════════════
+function renderFunil(){
+  const etapas = [
+    {label:'Leads captados', key:'total', color:'#3B82F6'},
+    {label:'Em conversa', key:'Em Atendimento', color:'#D4AF37'},
+    {label:'Proposta enviada', key:'Proposta de preco', color:'#8B5CF6'},
+    {label:'Negociando', key:'Negociacao/Revisao', color:'#E67E22'},
+    {label:'Contrato assinado', key:'Contrato Assinado', color:'#2ECC71'},
+    {label:'Ganho fechado', key:'Ganho fechado', color:'#4ADE80'},
+  ];
+
+  const counts = {
+    total: recs.length,
+    'Em Atendimento': recs.filter(r=>r.status==='Em Atendimento').length,
+    'Proposta de preco': recs.filter(r=>r.estagio==='Proposta de preco').length,
+    'Negociacao/Revisao': recs.filter(r=>r.estagio==='Negociacao/Revisao').length,
+    'Contrato Assinado': recs.filter(r=>r.estagio==='Contrato Assinado').length,
+    'Ganho fechado': recs.filter(r=>r.estagio==='Ganho fechado').length,
+  };
+
+  const max = counts.total || 1;
+  const el = document.getElementById('funilConversao');
+  if(!el) return;
+
+  el.innerHTML = etapas.map((e,i) => {
+    const cnt = counts[e.key]||0;
+    const pct = Math.round(cnt/max*100);
+    const convPct = i > 0 ? (counts[etapas[i-1].key] ? Math.round(cnt/counts[etapas[i-1].key]*100) : 0) : 100;
+    return `
+      ${i>0?`<div class="conv-arrow">↓ ${convPct}% de conversão</div>`:''}
+      <div class="funil-stage">
+        <div class="funil-lbl">${e.label}</div>
+        <div class="funil-bar-outer">
+          <div class="funil-bar-inner" style="width:${pct}%;background:${e.color}">${cnt}</div>
+        </div>
+        <div class="funil-pct" style="color:${e.color}">${pct}%</div>
+      </div>`;
+  }).join('');
+
+  // Performance por responsável
+  const perfEl = document.getElementById('perfResponsavel');
+  if(perfEl){
+    const ownerMap = {};
+    recs.forEach(r=>{
+      const o = r.responsavel||'JustHelp';
+      if(!ownerMap[o]) ownerMap[o] = {total:0,ganhos:0,entrada:0};
+      ownerMap[o].total++;
+      if(r.estagio==='Ganho fechado') ownerMap[o].ganhos++;
+      ownerMap[o].entrada += Number(r.valor_entrada)||0;
+    });
+    const maxT = Math.max(...Object.values(ownerMap).map(v=>v.total),1);
+    perfEl.innerHTML = Object.entries(ownerMap).map(([o,v])=>`
+      <div class="rel-row">
+        <div class="rel-name">
+          <div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:800;color:#fff">${o.split(' ').map(w=>w[0]).slice(0,2).join('')}</div>
+          ${o}
+        </div>
+        <div style="flex:1;padding:0 14px">
+          <div class="bar-wrap"><div class="bar-fill" style="width:${v.total/maxT*100}%;background:var(--blue)"></div></div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-weight:700;font-size:.76rem">${v.total} leads</div>
+          <div style="font-size:.64rem;color:var(--green2)">${v.ganhos} ganhos • R$ ${v.entrada.toLocaleString('pt-BR')}</div>
+        </div>
+      </div>`).join('');
+  }
+}
+
+// ═══════════════════════════════════════
+// MAPA DE LEADS
+// ═══════════════════════════════════════
+function renderMapa(){
+  // Estados (extraídos do telefone DDD)
+  const dddEstado = {'11':'SP','12':'SP','13':'SP','14':'SP','15':'SP','16':'SP','17':'SP','18':'SP','19':'SP','21':'RJ','22':'RJ','24':'RJ','27':'ES','28':'ES','31':'MG','32':'MG','33':'MG','34':'MG','35':'MG','37':'MG','38':'MG','41':'PR','42':'PR','43':'PR','44':'PR','45':'PR','46':'PR','47':'SC','48':'SC','49':'SC','51':'RS','53':'RS','54':'RS','55':'RS','61':'DF','62':'GO','64':'GO','63':'TO','65':'MT','66':'MT','67':'MS','68':'AC','69':'RO','71':'BA','73':'BA','74':'BA','75':'BA','77':'BA','79':'SE','81':'PE','82':'AL','83':'PB','84':'RN','85':'CE','86':'PI','87':'PE','88':'CE','89':'PI','91':'PA','92':'AM','93':'PA','94':'PA','95':'RR','96':'AP','97':'AM','98':'MA','99':'MA'};
+  
+  const estadoMap = {};
+  recs.forEach(r => {
+    const tel = (r.telefone||r.whatsapp||'').replace(/\D/g,'');
+    const ddd = tel.slice(0,2);
+    const estado = dddEstado[ddd];
+    if(estado){ estadoMap[estado]=(estadoMap[estado]||0)+1; }
+  });
+
+  const mapaEl = document.getElementById('mapaEstados');
+  if(mapaEl){
+    const sorted = Object.entries(estadoMap).sort((a,b)=>b[1]-a[1]);
+    const maxE = sorted[0]?.[1]||1;
+    mapaEl.innerHTML = sorted.length ? sorted.map(([e,c])=>`
+      <div class="estado-row">
+        <div class="estado-sigla">${e}</div>
+        <div class="estado-name">${e}</div>
+        <div class="estado-bar-w"><div class="estado-bar-f" style="width:${c/maxE*100}%"></div></div>
+        <div class="estado-cnt" style="color:var(--red2)">${c}</div>
+      </div>`).join('') : '<div style="color:var(--text-dim);font-size:.76rem;text-align:center;padding:20px">Adicione o DDD no telefone dos leads para ver o mapa</div>';
+  }
+
+  // Fonte
+  const fonteMap={};
+  recs.forEach(r=>{const f=r.fonte||'Outros';fonteMap[f]=(fonteMap[f]||0)+1;});
+  const mapaFonteEl = document.getElementById('mapaFonte');
+  if(mapaFonteEl){
+    const sortedF = Object.entries(fonteMap).sort((a,b)=>b[1]-a[1]);
+    const maxF = sortedF[0]?.[1]||1;
+    mapaFonteEl.innerHTML = sortedF.map(([f,c])=>`
+      <div class="estado-row">
+        <div class="estado-name" style="color:${FCLR[f]||'#aaa'}">${f}</div>
+        <div class="estado-bar-w" style="width:100px"><div class="estado-bar-f" style="width:${c/maxF*100}%;background:${FCLR[f]||'var(--red)'}"></div></div>
+        <div class="estado-cnt" style="color:${FCLR[f]||'#aaa'}">${c}</div>
+      </div>`).join('');
+  }
+
+  // Período (últimas semanas)
+  const periodoEl = document.getElementById('mapaPeriodo');
+  if(periodoEl){
+    const semanas = {};
+    recs.forEach(r=>{
+      if(!r.created_at) return;
+      const d = new Date(r.created_at);
+      const sem = `${d.getFullYear()}-S${Math.ceil((d.getDate()+new Date(d.getFullYear(),d.getMonth(),1).getDay())/7)}/${d.toLocaleDateString('pt-BR',{month:'short'})}`;
+      semanas[sem]=(semanas[sem]||0)+1;
+    });
+    const sortedS = Object.entries(semanas).slice(-6);
+    const maxS = Math.max(...sortedS.map(s=>s[1]),1);
+    periodoEl.innerHTML = sortedS.map(([s,c])=>`
+      <div class="estado-row">
+        <div class="estado-name">${s}</div>
+        <div class="estado-bar-w" style="width:100px"><div class="estado-bar-f" style="width:${c/maxS*100}%;background:var(--blue)"></div></div>
+        <div class="estado-cnt" style="color:var(--blue)">${c}</div>
+      </div>`).join('');
+  }
+}
+
+// ═══════════════════════════════════════
+// HISTÓRICO
+// ═══════════════════════════════════════
+let historicoLog = [];
+
+function addHistorico(tipo, texto, leadId=''){
+  const entry = {tipo, texto, leadId, user: currentUser?.nome||'JustHelp', date: new Date().toLocaleString('pt-BR'), ts: Date.now()};
+  historicoLog.unshift(entry);
+  // Keep last 200
+  if(historicoLog.length > 200) historicoLog = historicoLog.slice(0,200);
+  localStorage.setItem('jh_historico', JSON.stringify(historicoLog));
+}
+
+async function buscaCEP(cep){
+  const v = cep.replace(/\D/g,'');
+  if(v.length !== 8) return;
+  try{
+    const r = await fetch('https://viacep.com.br/ws/'+v+'/json/');
+    const d = await r.json();
+    if(d.erro) return;
+    if(document.getElementById('fEndr')) document.getElementById('fEndr').value = d.logradouro+(d.complemento?' '+d.complemento:'');
+    if(document.getElementById('fCid')) document.getElementById('fCid').value = d.localidade;
+    if(document.getElementById('fUF')) document.getElementById('fUF').value = d.uf;
+  } catch(e){}
+}
+
+function loadHistorico(){
+  try{ historicoLog = JSON.parse(localStorage.getItem('jh_historico')||'[]'); } catch{ historicoLog=[]; }
+}
+
+function renderHistorico(){
+  const el = document.getElementById('histList');
+  if(!el) return;
+  const filtro = document.getElementById('histFiltro')?.value||'';
+  const icons = {lead_criado:'🟢',status_mudou:'🔄',nota:'📝',chamada:'📞',estagio_mudou:'📋',contrato:'📄'};
+  const bgColors = {lead_criado:'rgba(39,174,96,.1)',status_mudou:'rgba(212,175,55,.1)',nota:'rgba(192,57,43,.1)',chamada:'rgba(59,130,246,.1)',estagio_mudou:'rgba(139,92,246,.1)',contrato:'rgba(0,180,162,.1)'};
+  
+  let log = filtro ? historicoLog.filter(h=>h.tipo===filtro) : historicoLog;
+  
+  if(!log.length){
+    el.innerHTML='<div class="empty-st"><div class="ei">📋</div><div>Nenhum registro no histórico</div></div>';
+    return;
+  }
+  el.innerHTML = log.map(h=>`
+    <div class="hist-item">
+      <div class="hist-icon" style="background:${bgColors[h.tipo]||'var(--bg3)'}">${icons[h.tipo]||'•'}</div>
+      <div class="hist-info">
+        <div class="hist-txt">${h.texto}</div>
+        <div class="hist-meta">👤 ${h.user} • 🕐 ${h.date}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════
+// CONTRATO DIGITAL
+// ═══════════════════════════════════════
+function renderContratoLeads(){
+  const sel = document.getElementById('contratoLead');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">Selecione um lead...</option>';
+  recs.filter(r=>r.plano).forEach(r=>{
+    const opt = document.createElement('option');
+    opt.value = r.id;
+    opt.textContent = r.nome + ' — ' + r.plano;
+    sel.appendChild(opt);
+  });
+}
+
+function previewContrato(){
+  const id = document.getElementById('contratoLead')?.value;
+  const prev = document.getElementById('contratoPreview');
+  const empty = document.getElementById('contratoEmpty');
+  if(!id){ prev.style.display='none'; empty.style.display='block'; return; }
+
+  const r = recs.find(x=>x.id===id);
+  if(!r) return;
+
+  const hoje = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  const pv = PVALS[r.plano]||0;
+  const entrada = Number(r.valor_entrada)||0;
+  const restante = Number(r.valor_restante)||0;
+
+  function valorExtenso(v){
+    const m={900:'Novecentos reais',1000:'Um mil reais',1300:'Um mil e trezentos reais',500:'Quinhentos reais',250:'Duzentos e cinquenta reais',1050:'Um mil e cinquenta reais'};
+    return m[v]||v+' reais';
+  }
+
+  const texto = `CONTRATO DE HONORÁRIOS ADVOCATÍCIOS
+Ação Declaratória de Inexigibilidade de Débito c/c Indenização por Danos Morais
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DAS PARTES
+
+CONTRATANTE (CLIENTE):
+Nome completo: ${r.nome.toUpperCase()}
+    Nacionalidade: ${r.nacionalidade||'Brasileiro(a)'}
+    Estado civil: ${r.estado_civil||'não informado'}
+    Profissão: ${r.profissao||'não informado'}
+    Data de nascimento: ${r.data_nascimento?new Date(r.data_nascimento+'T12:00:00').toLocaleDateString('pt-BR'):'não informado'}
+    CPF: ${r.cpf||'não informado'}
+    RG: ${r.rg||'não informado'}
+    Endereço: ${r.endereco||'não informado'}
+    Cidade/UF/CEP: ${[r.cidade,r.uf,r.cep].filter(Boolean).join(' / ')||'não informado'}
+    WhatsApp: ${r.whatsapp||r.telefone||'não informado'}
+
+CONTRATADO: JUSTHELP ASSESSORIA LTDA, CNPJ 65.620.168/0001-45,
+com endereço profissional na Avenida Brigadeiro Faria Lima, 1811, Sala 1119,
+Bela Vista, São Paulo/SP, CEP: 01.452-001, doravante denominado CONTRATADO.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CLÁUSULA 1ª – DO OBJETO
+
+O presente contrato tem por objeto a prestação de serviços advocatícios pelo
+CONTRATADO ao CONTRATANTE, consistindo no patrocínio e representação
+judicial na seguinte demanda: AÇÃO DECLARATÓRIA DE INEXIGIBILIDADE DE
+DÉBITO, a ser proposta em face das empresas que negativaram o CPF de
+${r.nome.split(' ')[0]}, em razão de cobrança indevida e/ou inscrição irregular do
+nome do CONTRATANTE em cadastros de inadimplentes (${r.elegibilidade||'SPC/Serasa ou similares'}).
+
+A CONTRATADA declara que prestará o serviço de exclusão de apontamentos
+restritivos no CPF ou CNPJ da CONTRATANTE junto às associações de proteção
+ao crédito, com base nos artigos 42, 43 e 83 do Código de Defesa do Consumidor (CDC).
+
+PARÁGRAFO ÚNICO: O CONTRATANTE poderá, opcionalmente, contratar duas
+consultas ao SERASA, sendo uma antes do início do serviço e outra após a
+conclusão, pelo valor total de R$35,00 (Trinta e cinco reais).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CLÁUSULA 2ª – DOS HONORÁRIOS ADVOCATÍCIOS
+
+Pela execução integral dos serviços descritos na Cláusula 1ª, o CONTRATANTE
+pagará ao CONTRATADO, a título de honorários advocatícios, o valor de
+R$ ${entrada.toLocaleString('pt-BR')} (${valorExtenso(entrada)}), como sendo um sinal, e mais
+R$ ${restante.toLocaleString('pt-BR')} (${valorExtenso(restante)}) a serem pagos ao final do processo.
+Total: R$ ${pv.toLocaleString('pt-BR')} (${valorExtenso(pv)}).
+
+§ 1º – Da Forma de Pagamento: Os honorários serão pagos mediante transferência
+via PIX, chave: justhelpbr@gmail.com, em nome de JustHelp Assessoria.
+
+§ 2º – Honorários de Êxito: Em caso de êxito na demanda, o CONTRATANTE
+pagará honorários de êxito de 30% (Trinta por cento) sobre o valor da condenação.
+
+§ 3º – Honorários Sucumbenciais: Os honorários sucumbenciais fixados pelo
+juízo pertencem exclusivamente ao CONTRATADO, nos termos do art. 85, § 14, CPC.
+
+DO ATRASO NO PAGAMENTO:
+a) Juros moratórios de 1% (um por cento) ao mês, calculados pro rata die;
+b) Multa moratória de 2% (dois por cento) sobre o valor da parcela em atraso;
+c) Correção monetária pelo IPCA/IBGE, a partir do vencimento.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CLÁUSULA 3ª
+
+A CONTRATADA não se responsabiliza por processos ou débitos referentes
+a cheques devolvidos existentes no CPF ou CNPJ da CONTRATANTE.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CLÁUSULA 4ª – DAS LIMITAÇÕES
+
+O CONTRATANTE declara estar ciente de que protestos, processos e débitos
+existentes não serão quitados ou extintos; apenas seu nome será removido dos
+apontamentos nas instituições SERASA, SPC, BOA VISTA e CENPROT.
+
+PARÁGRAFO PRIMEIRO: A restauração do Score é um serviço bônus, sem
+garantia de pontuação específica.
+
+PARÁGRAFO SEGUNDO: O serviço não inclui a remoção de apontamentos no BACEN.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CLÁUSULA 5ª – DOS CHEQUES DEVOLVIDOS
+
+O CONTRATANTE declara estar ciente de que cheques devolvidos duas vezes
+resultam em registro no CCF dos bancos. O pagamento das dívidas com credores
+não será realizado — apenas removidos os apontamentos nas instituições
+SERASA, SPC, BOA VISTA e CENPROT.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CLÁUSULA 6ª – DAS OBRIGAÇÕES DO CONTRATADO
+
+I – Prestar os serviços com dedicação, diligência e ética profissional (OAB);
+II – Manter o CONTRATANTE informado sobre o andamento do processo;
+III – Guardar sigilo profissional sobre todas as informações do mandato;
+IV – Comunicar imediatamente decisões relevantes proferidas nos autos;
+V – Apresentar relatório detalhado das providências adotadas quando solicitado.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CLÁUSULA 7ª – DAS OBRIGAÇÕES DO CONTRATANTE
+
+I – Fornecer todos os documentos e informações necessários ao mandato;
+II – Efetuar o pagamento dos honorários nos prazos convencionados;
+III – Arcar com despesas processuais e extrajudiciais (custas, taxas, etc.);
+IV – Comunicar alterações em dados pessoais em até 48 horas;
+V – Comparecer a audiências quando convocado.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CLÁUSULA 8ª – DA DESISTÊNCIA E DA RESCISÃO
+
+§ 1º – Desistência antes do ajuizamento: honorários de 30% do valor total contratado.
+§ 2º – Desistência após o ajuizamento: multa rescisória de 40% do valor total.
+§ 3º – Rescisão pelo CONTRATANTE: multa de 50% sobre o valor total dos honorários.
+§ 4º – Rescisão pelo CONTRATADO: somente por justa causa, com devolução proporcional.
+§ 5º – Renúncia ao mandato: o CONTRATADO representará o CONTRATANTE por
+mais 10 (dez) dias, nos termos do art. 45 do Estatuto da OAB.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CLÁUSULA 9ª – DAS DESPESAS PROCESSUAIS
+
+Custas judiciais, emolumentos, taxas, honorários periciais e demais despesas
+extrajudiciais são de exclusiva responsabilidade do CONTRATANTE.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CLÁUSULA 10ª – DA CONFIDENCIALIDADE
+
+As partes mantêm absoluto sigilo sobre informações, documentos e estratégias
+jurídicas durante a vigência do contrato e após seu encerramento.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CLÁUSULA 11ª – DO TRATAMENTO DE DADOS PESSOAIS (LGPD)
+
+Em conformidade com a Lei nº 13.709/2018, o CONTRATADO trata os dados
+pessoais do CONTRATANTE exclusivamente para os fins deste contrato.
+O CONTRATANTE autoriza expressamente o tratamento de seus dados pessoais.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CLÁUSULA 12ª – DAS DISPOSIÇÕES GERAIS
+
+§ 1º – Contrato de caráter personalíssimo; cessão vedada sem anuência mútua.
+§ 2º – Tolerância não implica novação, renúncia ou modificação do pactuado.
+§ 3º – Alterações somente válidas se formalizadas por escrito e assinadas.
+§ 4º – Em caso de êxito, o CONTRATADO pode divulgar resultado de forma anonimizada.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CLÁUSULA 13ª – DO FORO
+
+As partes elegem o foro da Comarca de São Paulo/SP para dirimir quaisquer
+controvérsias oriundas do presente contrato.
+
+E por estarem assim justos e contratados, as partes assinam o presente
+instrumento em duas vias de igual forma e teor.
+
+São Paulo/SP, ${hoje}
+
+
+________________________________      ________________________________
+${r.nome.toUpperCase()}
+CONTRATANTE                            JUSTHELP ASSESSORIA LTDA
+CPF:                                   CONTRATADO
+
+
+TESTEMUNHAS:
+
+________________________________      ________________________________
+1ª Testemunha                          2ª Testemunha
+CPF:                                   CPF:`;
+
+  document.getElementById('contratoTexto').textContent = texto;
+  prev.style.display = 'block';
+  empty.style.display = 'none';
+  addHistorico('contrato', `Contrato gerado para <strong>${r.nome}</strong> — ${r.plano}`, r.id);
+}
+function imprimirContrato(){
+  const texto = document.getElementById('contratoTexto')?.textContent;
+  if(!texto) return;
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><title>Contrato JustHelp</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.8;padding:2cm;max-width:21cm;margin:0 auto;color:#000}
+    .header{text-align:center;border-bottom:2px solid #000;padding-bottom:16px;margin-bottom:24px}
+    .header img{height:50px;margin-bottom:8px}
+    .header-address{font-size:9pt;color:#555;margin-top:4px}
+    .titulo{font-size:16pt;font-weight:bold;text-align:center;margin-bottom:4px;text-transform:uppercase}
+    .subtitulo{font-size:10pt;font-style:italic;text-align:center;margin-bottom:24px}
+    pre{font-family:'Times New Roman',serif;font-size:11pt;line-height:1.8;white-space:pre-wrap;word-break:break-word}
+    @media print{body{padding:1.5cm}@page{margin:2cm}}
+  </style>
+  </head><body>
+  <div class="header">
+    <img src="https://res.cloudinary.com/dmdaiwkyl/image/upload/v1773170909/LOGO_02_COLOR_1_voxxy3.png" alt="JustHelp">
+    <div class="header-address">Av. Brigadeiro Faria Lima, 1811, Sala 1119 – São Paulo/SP | CNPJ: 65.620.168/0001-45 | WhatsApp: (11) 91733-5910</div>
+  </div>
+  <pre>${texto}</pre>
+  </body></html>`);
+  win.document.close();
+  setTimeout(()=>win.print(), 500);
+}
+
+function enviarContratoWA(){
+  const id = document.getElementById('contratoLead')?.value;
+  const r = recs.find(x=>x.id===id);
+  if(!r) return;
+  const waNum = (r.whatsapp||r.telefone||'').replace(/\D/g,'');
+  if(!waNum){ toast('Lead sem WhatsApp cadastrado','err'); return; }
+  const msg = encodeURIComponent(`Olá ${r.nome}! Segue o resumo do seu contrato com a JustHelp:\n\nPlano: ${r.plano}\nEntrada: R$ ${Number(r.valor_entrada||0).toLocaleString('pt-BR')} (PIX: justhelpbr@gmail.com)\nRestante: R$ ${Number(r.valor_restante||0).toLocaleString('pt-BR')} (após conclusão)\n\nQualquer dúvida estamos à disposição!`);
+  window.open(`https://wa.me/55${waNum}?text=${msg}`,'_blank');
+}
+
+// ═══════════════════════════════════════
+// AGENDA — campo próximo contato no form
+// ═══════════════════════════════════════
+const _origFormHtml = formHtml;
+function formHtml(r){
+  return _origFormHtml(r) + `
+  <div style="margin-top:4px;padding-top:14px;border-top:1px solid var(--border)">
+    <div style="font-size:.62rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px">📅 Agendamento</div>
+    <div class="fg-2">
+      <div class="fg"><label>Próximo Contato</label><input type="date" id="fPC" value="${r.proximo_contato||''}"></div>
+      <div class="fg"><label>Observação do Agendamento</label><input id="fOA" value="${r.obs_agenda||''}" placeholder="Ex: Retornar sobre proposta"></div>
+    </div>
+  </div>`;
+}
+
+// Patch saveRec to include agenda fields
+const _origSaveRec = saveRec;
+async function saveRec(){
+  // We'll call the full save with extra fields
+  const nome=document.getElementById('fN')?.value.trim();
+  if(!nome){toast('Nome obrigatório','err');return;}
+  const plano=document.getElementById('fPl')?.value||'';
+  const ent=Number(document.getElementById('fEn')?.value)||0;
+  const rest=Math.max(0,(PVALS[plano]||0)-ent);
+  const data={
+    nome,
+    cpf:document.getElementById('fCPF')?.value||'',
+    rg:document.getElementById('fRG')?.value||'',
+    data_nascimento:document.getElementById('fDN')?.value||'',
+    nacionalidade:document.getElementById('fNac')?.value||'Brasileiro(a)',
+    estado_civil:document.getElementById('fEC')?.value||'',
+    profissao:document.getElementById('fProf')?.value||'',
+    email:document.getElementById('fEmail')?.value||'',
+    cep:document.getElementById('fCEP')?.value||'',
+    endereco:document.getElementById('fEndr')?.value||'',
+    cidade:document.getElementById('fCid')?.value||'',
+    uf:document.getElementById('fUF')?.value||'',
+    credor:document.getElementById('fCred')?.value||'',
+    valor_divida:Number(document.getElementById('fDivida')?.value)||null,
+    telefone:document.getElementById('fT')?.value||'',
+    whatsapp:document.getElementById('fW')?.value||'',
+    fonte:document.getElementById('fFt')?.value||'',
+    elegibilidade:document.getElementById('fEl')?.value||'',
+    status:document.getElementById('fSt')?.value||'Novo Lead',
+    estagio:document.getElementById('fEs')?.value||'Proposta de preco',
+    plano,valor_entrada:ent,valor_restante:rest,
+    responsavel:document.getElementById('fR')?.value||'JustHelp',
+    descricao:document.getElementById('fDesc')?.value||'',
+    proximo_contato:document.getElementById('fPC')?.value||'',
+    obs_agenda:document.getElementById('fOA')?.value||'',
+    notas:editId?(recs.find(r=>r.id===editId)?.notas||[]):[],
+    chamadas:editId?(recs.find(r=>r.id===editId)?.chamadas||[]):[],
+    cadastrado_por:editId?(recs.find(r=>r.id===editId)?.cadastrado_por||(currentUser?.nome||'JustHelp')):(currentUser?.nome||'JustHelp'),
+    updated_at: new Date().toISOString(),
+  };
+  const isNovo = !editId;
+  await upsert(data);
+  if(isNovo) addHistorico('lead_criado', `Novo lead criado: <strong>${nome}</strong> — ${data.fonte||'sem fonte'}`);
+  closeDrawer();
+  renderAll();
+}
+
 window.addEventListener('DOMContentLoaded',()=>{
   const u=localStorage.getItem('jh_url')||SU;const k=localStorage.getItem('jh_key')||SK;
   document.getElementById('cfgU').value=u;document.getElementById('cfgK').value=k;SU=u;SK=k;
   initSupabase();
+  loadHistorico();
   checkSession();
 });
 </script>
