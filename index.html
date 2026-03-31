@@ -383,6 +383,20 @@ tr:hover .td-acts{opacity:1}
 .com-pendente{border-left:3px solid var(--gold2)}
 .com-badge{font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:20px;cursor:pointer;border:none;transition:.15s}
 
+
+/* PRODUTOS */
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;padding:14px}
+.prod-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;transition:.2s;position:relative}
+.prod-card:hover{border-color:var(--border2);transform:translateY(-1px);box-shadow:var(--shadow)}
+.prod-cat{font-size:.54rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;padding:2px 8px;border-radius:20px;margin-bottom:10px;display:inline-block}
+.prod-name{font-family:"Syne",sans-serif;font-size:.96rem;font-weight:700;margin-bottom:4px}
+.prod-desc{font-size:.72rem;color:var(--textdim);margin-bottom:12px;line-height:1.5;min-height:32px}
+.prod-price{font-family:"Montserrat",sans-serif;font-size:1.3rem;font-weight:900;color:var(--gold2);margin-bottom:4px}
+.prod-price-sub{font-size:.62rem;color:var(--textdim)}
+.prod-acts{position:absolute;top:12px;right:12px;display:flex;gap:5px;opacity:0;transition:.15s}
+.prod-card:hover .prod-acts{opacity:1}
+.prod-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:10px;color:var(--textdim);font-size:.78rem;grid-column:1/-1}
+
 </style>
 </head>
 <body>
@@ -469,6 +483,9 @@ tr:hover .td-acts{opacity:1}
       <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Relatórios
     </button>
     <div class="sb-sec">Sistema</div>
+    <button class="sb-btn" onclick="goV('produtos',this)">
+      <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Produtos
+    </button>
     <button class="sb-btn" onclick="goV('log',this)">
       <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Log de Acesso
     </button>
@@ -879,6 +896,22 @@ CREATE TABLE IF NOT EXISTS leads (
   created_at timestamptz DEFAULT now()
 );
 ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE IF NOT EXISTS produtos (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  nome text NOT NULL,
+  categoria text,
+  descricao text,
+  preco numeric NOT NULL,
+  entrada numeric DEFAULT 0,
+  restante numeric DEFAULT 0,
+  parcelas text,
+  comissao numeric DEFAULT 10,
+  ativo boolean DEFAULT true,
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE produtos ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "pub_p" ON produtos FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "pub" ON leads FOR ALL USING (true) WITH CHECK (true);
 
 CREATE TABLE IF NOT EXISTS colaboradores (
@@ -994,6 +1027,21 @@ CREATE POLICY "pub_c" ON colaboradores FOR ALL USING (true) WITH CHECK (true);</
       <div style="flex:1;overflow-y:auto;padding:14px" id="comGrid"></div>
     </div>
 
+
+    <!-- PRODUTOS -->
+    <div class="view" id="view-produtos">
+      <div style="padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:.74rem;color:var(--textdim)" id="prodCount">0 produtos cadastrados</span>
+        <select class="sel" id="prodFiltCat" onchange="renderProdutos()" style="min-width:140px">
+          <option value="">Todas as categorias</option>
+        </select>
+        <button class="btn-new" onclick="openNovoProduto()" style="margin-left:auto">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo Produto
+        </button>
+      </div>
+      <div class="prod-grid" id="prodGrid"></div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
 </div><!-- /app -->
@@ -1047,6 +1095,51 @@ CREATE POLICY "pub_c" ON colaboradores FOR ALL USING (true) WITH CHECK (true);</
     <div class="dr-foot">
       <button class="btn-cancel" onclick="closeColab()">Cancelar</button>
       <button class="btn-save" onclick="criarColab()">Criar Acesso</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL PRODUTO -->
+<div class="overlay" id="modalProduto">
+  <div class="drawer" style="max-width:440px">
+    <div class="dr-head">
+      <div class="dr-ttl" id="prodModalTtl">Novo Produto</div>
+      <button class="dr-close" onclick="closeProduto()">✕</button>
+    </div>
+    <div class="dr-body">
+      <div class="fg"><label>Nome do Produto *</label><input id="pNome" placeholder="Ex: Plano Essencial, Consultoria Premium"></div>
+      <div class="fg"><label>Categoria *</label>
+        <div style="display:flex;gap:6px">
+          <select id="pCat" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:8px 10px;color:#E2E8F0;font-size:.78rem">
+            <option value="">Selecione...</option>
+            <option>Plano Jurídico</option>
+            <option>PIX Parcelado</option>
+            <option>Consultoria</option>
+            <option>Assessoria</option>
+            <option>Outro</option>
+          </select>
+          <input id="pCatCustom" placeholder="Ou digite..." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:8px 10px;color:#E2E8F0;font-size:.78rem">
+        </div>
+      </div>
+      <div class="fg"><label>Descrição</label><textarea id="pDesc" rows="3" placeholder="Descreva o produto brevemente..." style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:8px 10px;color:#E2E8F0;font-size:.78rem;resize:vertical"></textarea></div>
+      <div class="fg-2">
+        <div class="fg"><label>Preço Total (R$) *</label><input type="number" id="pPreco" placeholder="Ex: 900" oninput="calcProdEntrada()"></div>
+        <div class="fg"><label>Entrada (R$)</label><input type="number" id="pEntrada" placeholder="Ex: 100" oninput="calcProdRestante()"></div>
+      </div>
+      <div class="fg-2">
+        <div class="fg"><label>Restante (R$)</label><input type="number" id="pRestante" placeholder="Calculado auto" readonly style="background:var(--bg4);color:var(--textdim)"></div>
+        <div class="fg"><label>Parcelas</label><input id="pParcelas" placeholder="Ex: 2x de R$450, 12x R$83"></div>
+      </div>
+      <div class="fg"><label>Comissão do Vendedor (%)</label>
+        <input type="number" id="pComissao" value="10" placeholder="Ex: 10" min="0" max="100">
+        <div style="font-size:.62rem;color:var(--textdim);margin-top:3px">Padrão: 10%. Calculado sobre o preço total quando processo ganho.</div>
+      </div>
+      <div style="font-size:.7rem;color:#FC8181;margin-top:4px" id="prodErr"></div>
+    </div>
+    <div class="dr-foot">
+      <button class="btn-cancel" onclick="closeProduto()">Cancelar</button>
+      <button class="btn-save" onclick="salvarProduto()">Salvar Produto</button>
     </div>
   </div>
 </div>
@@ -1256,6 +1349,7 @@ function onLogin(user){
   document.getElementById('sbUrole').textContent=user.role||'Assessoria Jurídica';
   addAccessLog('login','Login realizado');
   loadResps();
+  loadProdutos();
   loadData();
 }
 
@@ -1563,9 +1657,16 @@ function formHtml(r){
   +'<div class="fg"><label>Estágio (Negócio)</label><select id="fEs"><option value="">Selecione...</option>'
   +NESTAGES.map(a=>'<option'+(a===r.estagio?' selected':'')+'>'+a+'</option>').join('')
   +'</select></div></div>'
-  +'<div class="fg-2"><div class="fg"><label>Plano</label><select id="fPl"><option value="">Sem plano</option>'
-  +'<optgroup label="Pagamento à Vista / Parcelado Fixo">'  +['A Vista R$900','Standard R$500+R$500','Plus R$250+R$1050'].map(a=>'<option value="'+a+'"'+(a===r.plano?' selected':'')+'>'+(PLANO_LABELS[a]||a)+'</option>').join('')  +'</optgroup>'  +'<optgroup label="💠 PIX Parcelado">'  +['PIX Parcelado 2x R$450','PIX Parcelado 3x R$300','PIX Parcelado 4x R$250','PIX Parcelado 5x R$200','PIX Parcelado 6x R$167','PIX Parcelado 10x R$100','PIX Parcelado 12x R$83'].map(a=>'<option value="'+a+'"'+(a===r.plano?' selected':'')+'>'+(PLANO_LABELS[a]||a)+'</option>').join('')  +'</optgroup>'
-  +'</select></div><div class="fg"><label>Entrada Paga (R$)</label><input type="number" id="fEn" value="'+(r.valor_entrada||'')+'" placeholder="0"></div></div>'
+  +'<div class="fg-2"><div class="fg"><label>Plano</label><select id="fPl" onchange="autoFillProduto()" ><option value="">Sem plano</option>'
+  +(()=>{
+    const cats=[...new Set(produtos.filter(p=>p.ativo!==false).map(p=>p.categoria))];
+    if(!cats.length) return '<option disabled>Nenhum produto — cadastre em Produtos</option>';
+    return cats.map(cat=>{
+      const prods=produtos.filter(p=>p.ativo!==false&&p.categoria===cat);
+      return '<optgroup label="'+cat+'">'+prods.map(p=>'<option value="'+p.nome+'"'+(p.nome===r.plano?' selected':'')+'>'+p.nome+(p.parcelas?' ('+p.parcelas+')':'')+(p.preco?' — R$ '+Number(p.preco).toLocaleString('pt-BR'):'')+'</option>').join('')+'</optgroup>';
+    }).join('');
+  })()
+  +'</select></div><div class="fg"><label>Entrada Paga (R$)</label><input type="number" id="fEn" value="'+(r.valor_entrada||'')+'" placeholder="0" oninput="calcRestante()"></div></div>'
   +'<div class="fg-2"><div class="fg"><label>Forma de Pagamento</label><select id="fFpag"><option value="PIX">💰 PIX à Vista</option><option value="PIX Parcelado"'+(r.forma_pagamento==="PIX Parcelado"?' selected':'')+'>💠 PIX Parcelado</option><option value="Cartão de Crédito"'+(r.forma_pagamento==="Cartão de Crédito"?' selected':'')+'>💳 Cartão de Crédito</option><option value="PIX + Cartão"'+(r.forma_pagamento==="PIX + Cartão"?' selected':'')+'>💰+💳 PIX + Cartão</option></select></div>'
   +'<div class="fg"><label>Parcelas (cartão)</label><select id="fParc"><option value="">À vista</option>'
   +[2,3,4,5,6,7,8,9,10,11,12].map(n=>'<option value="'+n+'x"'+(r.parcelas==="'+n+'x"?' selected':'')+'>'+n+'x</option>').join('')
@@ -2170,7 +2271,7 @@ async function delColab(id,email){
 }
 
 // ═══ NAV ═══
-const TITLES={dashboard:'Página Inicial',leads:'Clientes Potenciais',negocios:'Negócios',kanban:'Kanban',agenda:'Agenda',parados:'Leads Parados',meta:'Meta e Receita',funil:'Funil de Conversão',mapa:'Mapa de Leads',historico:'Histórico',contrato:'Contrato Digital',clicksign:'Clicksign',recebiveis:'Recebíveis',inadimplencia:'Inadimplência',comissoes:'Comissões',relatorios:'Relatórios',log:'Log de Acesso',colaboradores:'Colaboradores',config:'Configurações'};
+const TITLES={dashboard:'Página Inicial',leads:'Clientes Potenciais',negocios:'Negócios',kanban:'Kanban',agenda:'Agenda',parados:'Leads Parados',meta:'Meta e Receita',funil:'Funil de Conversão',mapa:'Mapa de Leads',historico:'Histórico',contrato:'Contrato Digital',clicksign:'Clicksign',recebiveis:'Recebíveis',inadimplencia:'Inadimplência',comissoes:'Comissões',produtos:'Produtos',relatorios:'Relatórios',log:'Log de Acesso',colaboradores:'Colaboradores',config:'Configurações'};
 
 function goV(v,btn){
   curV=v;curSub='todos';
@@ -2222,6 +2323,7 @@ function goV(v,btn){
   if(v==='comissoes'){ populateComMes(); renderComissoes(); }
   if(v==='relatorios') renderRelatorios();
   if(v==='log') renderLog();
+  if(v==='produtos'){ renderProdutos(); renderCatFilter(); }
   if(v==='contrato')loadContratoLeads();
   if(v==='config'){document.getElementById('cfgU').value=SU;document.getElementById('cfgK').value=SK;}
   renderTbl();closeSb();
@@ -2310,7 +2412,27 @@ function toast(msg,type='inf'){
 
 // ═══ INIT ═══
 
-// ═══ LOG DE ACESSO ═══
+// Auto-preenche entrada/restante ao selecionar produto
+function autoFillProduto(){
+  const plano = document.getElementById('fPl')?.value;
+  if(!plano) return;
+  const prod = produtos.find(p=>p.nome===plano);
+  if(!prod) return;
+  const enEl = document.getElementById('fEn');
+  const fpEl = document.getElementById('fFpag');
+  if(enEl && !enEl.value) enEl.value = prod.entrada||'';
+  if(fpEl && prod.categoria==='PIX Parcelado') fpEl.value = 'PIX Parcelado';
+}
+
+function calcRestante(){
+  const plano = document.getElementById('fPl')?.value;
+  const prod = produtos.find(p=>p.nome===plano);
+  const preco = prod?.preco || PVALS[plano] || 0;
+  const ent = Number(document.getElementById('fEn')?.value)||0;
+  // Apenas feedback visual — não tem campo restante no form, é calculado no saveRec
+}
+
+
 let accessLog = [];
 function loadAccessLog(){ try{ accessLog=JSON.parse(localStorage.getItem('jh_alog')||'[]'); }catch{ accessLog=[]; } }
 function addAccessLog(tipo, desc){
@@ -2960,6 +3082,228 @@ function exportComissoesPDF(){
   rows.push('<\/table>');
   const titulo='Relatório de Comissões'+(mes?' — '+new Date(mes+'-01').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):'');
   exportPDF(titulo, rows.join(''));
+}
+
+
+
+// ═══ PRODUTOS ═══
+let produtos = [];   // {id, nome, categoria, descricao, preco, entrada, restante, parcelas, comissao, ativo, created_at}
+let editProdId = null;
+
+const CAT_CORES = {
+  'Plano Jurídico':  {bg:'rgba(139,92,246,.15)',color:'#A78BFA'},
+  'PIX Parcelado':   {bg:'rgba(0,180,162,.15)',color:'#2DD4BF'},
+  'Consultoria':     {bg:'rgba(212,175,55,.15)',color:'var(--gold2)'},
+  'Assessoria':      {bg:'rgba(59,130,246,.15)',color:'#60A5FA'},
+  'Outro':           {bg:'rgba(113,113,122,.15)',color:'#A1A1AA'},
+};
+function catCor(cat){ return CAT_CORES[cat]||{bg:'rgba(255,255,255,.07)',color:'var(--textmid)'}; }
+
+async function loadProdutos(){
+  try{
+    const data = await sb('GET','produtos?order=created_at.desc');
+    produtos = data||[];
+  }catch(e){
+    // Tabela não existe ainda — usa produtos padrão migrados dos planos fixos
+    if(!produtos.length) produtos = getProdutosPadrao();
+  }
+  syncProdutosComPlanos();
+}
+
+function getProdutosPadrao(){
+  return [
+    {id:'p1',nome:'À Vista',categoria:'Plano Jurídico',descricao:'Pagamento único à vista',preco:900,entrada:900,restante:0,parcelas:'',comissao:10,ativo:true,created_at:new Date().toISOString()},
+    {id:'p2',nome:'Standard',categoria:'Plano Jurídico',descricao:'Entrada + restante ao final',preco:1000,entrada:500,restante:500,parcelas:'',comissao:10,ativo:true,created_at:new Date().toISOString()},
+    {id:'p3',nome:'Plus',categoria:'Plano Jurídico',descricao:'Entrada reduzida + restante ao final',preco:1300,entrada:250,restante:1050,parcelas:'',comissao:10,ativo:true,created_at:new Date().toISOString()},
+    {id:'p4',nome:'PIX Parcelado 2x',categoria:'PIX Parcelado',descricao:'2 parcelas mensais via PIX',preco:900,entrada:450,restante:450,parcelas:'2x R$450',comissao:10,ativo:true,created_at:new Date().toISOString()},
+    {id:'p5',nome:'PIX Parcelado 3x',categoria:'PIX Parcelado',descricao:'3 parcelas mensais via PIX',preco:900,entrada:300,restante:600,parcelas:'3x R$300',comissao:10,ativo:true,created_at:new Date().toISOString()},
+    {id:'p6',nome:'PIX Parcelado 4x',categoria:'PIX Parcelado',descricao:'4 parcelas mensais via PIX',preco:1000,entrada:250,restante:750,parcelas:'4x R$250',comissao:10,ativo:true,created_at:new Date().toISOString()},
+    {id:'p7',nome:'PIX Parcelado 5x',categoria:'PIX Parcelado',descricao:'5 parcelas mensais via PIX',preco:1000,entrada:200,restante:800,parcelas:'5x R$200',comissao:10,ativo:true,created_at:new Date().toISOString()},
+    {id:'p8',nome:'PIX Parcelado 6x',categoria:'PIX Parcelado',descricao:'6 parcelas mensais via PIX',preco:1000,entrada:167,restante:833,parcelas:'6x R$167',comissao:10,ativo:true,created_at:new Date().toISOString()},
+    {id:'p9',nome:'PIX Parcelado 10x',categoria:'PIX Parcelado',descricao:'10 parcelas mensais via PIX',preco:1000,entrada:100,restante:900,parcelas:'10x R$100',comissao:10,ativo:true,created_at:new Date().toISOString()},
+    {id:'p10',nome:'PIX Parcelado 12x',categoria:'PIX Parcelado',descricao:'12 parcelas mensais via PIX',preco:996,entrada:83,restante:913,parcelas:'12x R$83',comissao:10,ativo:true,created_at:new Date().toISOString()},
+  ];
+}
+
+function syncProdutosComPlanos(){
+  // Sincroniza PLANOS e PVALS com produtos ativos
+  PLANOS.length = 0;
+  Object.keys(PVALS).forEach(k=>delete PVALS[k]);
+  Object.keys(PLANO_LABELS).forEach(k=>delete PLANO_LABELS[k]);
+  produtos.filter(p=>p.ativo!==false).forEach(p=>{
+    PLANOS.push(p.nome);
+    PVALS[p.nome] = p.preco;
+    PLANO_LABELS[p.nome] = p.nome+(p.parcelas?' ('+p.parcelas+')':'')+(p.categoria?' — '+p.categoria:'');
+  });
+}
+
+function renderProdutos(){
+  const grid = document.getElementById('prodGrid'); if(!grid) return;
+  const catFil = document.getElementById('prodFiltCat')?.value||'';
+  const lista = produtos.filter(p=>!catFil||p.categoria===catFil);
+  const cnt = document.getElementById('prodCount');
+  if(cnt) cnt.textContent = produtos.length+' produto'+(produtos.length!==1?'s':'')+' cadastrado'+(produtos.length!==1?'s':'');
+
+  if(!lista.length){
+    grid.innerHTML='<div class="prod-empty"><div style="font-size:2.5rem;opacity:.3">📦</div><div style="font-weight:600">Nenhum produto cadastrado</div><div>Clique em "Novo Produto" para começar</div></div>';
+    return;
+  }
+
+  grid.innerHTML = lista.map(p=>{
+    const cor = catCor(p.categoria);
+    const comissaoVal = Math.round(p.preco*(p.comissao||10)/100);
+    return `<div class="prod-card">
+      <div class="prod-acts">
+        <button class="act" onclick="editProduto('${p.id}')" title="Editar">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="act del" onclick="deleteProduto('${p.id}')" title="Remover">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+        </button>
+      </div>
+      <span class="prod-cat" style="background:${cor.bg};color:${cor.color}">${p.categoria||'Sem categoria'}</span>
+      <div class="prod-name">${p.nome}</div>
+      <div class="prod-desc">${p.descricao||'—'}</div>
+      <div class="prod-price">R$ ${Number(p.preco).toLocaleString('pt-BR')}</div>
+      <div class="prod-price-sub">
+        ${p.entrada?'Entrada: R$ '+Number(p.entrada).toLocaleString('pt-BR'):''}
+        ${p.restante?' • Restante: R$ '+Number(p.restante).toLocaleString('pt-BR'):''}
+        ${p.parcelas?'<br>'+p.parcelas:''}
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        <span style="font-size:.64rem;color:var(--textdim)">Comissão vendedor</span>
+        <span style="font-size:.72rem;font-weight:700;color:#A78BFA">${p.comissao||10}% = R$ ${comissaoVal.toLocaleString('pt-BR')}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderCatFilter(){
+  const sel = document.getElementById('prodFiltCat'); if(!sel) return;
+  const cats = [...new Set(produtos.map(p=>p.categoria).filter(Boolean))];
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">Todas as categorias</option>';
+  cats.forEach(cat=>{ sel.innerHTML += '<option value="'+cat+'"'+(cat===prev?' selected':'')+'>'+cat+'</option>'; });
+}
+
+function openNovoProduto(){
+  if(!isAdmin()){ toast('Apenas administradores podem gerenciar produtos','err'); return; }
+  editProdId = null;
+  document.getElementById('prodModalTtl').textContent = 'Novo Produto';
+  document.getElementById('pNome').value = '';
+  document.getElementById('pCat').value = '';
+  document.getElementById('pCatCustom').value = '';
+  document.getElementById('pDesc').value = '';
+  document.getElementById('pPreco').value = '';
+  document.getElementById('pEntrada').value = '';
+  document.getElementById('pRestante').value = '';
+  document.getElementById('pParcelas').value = '';
+  document.getElementById('pComissao').value = '10';
+  document.getElementById('prodErr').textContent = '';
+  document.getElementById('modalProduto').classList.add('open');
+}
+
+function editProduto(id){
+  if(!isAdmin()){ toast('Apenas administradores podem editar produtos','err'); return; }
+  const p = produtos.find(x=>x.id===id); if(!p) return;
+  editProdId = id;
+  document.getElementById('prodModalTtl').textContent = 'Editar Produto';
+  document.getElementById('pNome').value = p.nome||'';
+  // Verifica se é categoria padrão ou custom
+  const catsPadrao = ['Plano Jurídico','PIX Parcelado','Consultoria','Assessoria','Outro'];
+  if(catsPadrao.includes(p.categoria)){
+    document.getElementById('pCat').value = p.categoria;
+    document.getElementById('pCatCustom').value = '';
+  } else {
+    document.getElementById('pCat').value = '';
+    document.getElementById('pCatCustom').value = p.categoria||'';
+  }
+  document.getElementById('pDesc').value = p.descricao||'';
+  document.getElementById('pPreco').value = p.preco||'';
+  document.getElementById('pEntrada').value = p.entrada||'';
+  document.getElementById('pRestante').value = p.restante||'';
+  document.getElementById('pParcelas').value = p.parcelas||'';
+  document.getElementById('pComissao').value = p.comissao||10;
+  document.getElementById('prodErr').textContent = '';
+  document.getElementById('modalProduto').classList.add('open');
+}
+
+function closeProduto(){ document.getElementById('modalProduto').classList.remove('open'); }
+
+function calcProdEntrada(){
+  const preco = Number(document.getElementById('pPreco')?.value)||0;
+  const entrada = Number(document.getElementById('pEntrada')?.value)||0;
+  if(preco && entrada) document.getElementById('pRestante').value = Math.max(0,preco-entrada);
+}
+function calcProdRestante(){
+  const preco = Number(document.getElementById('pPreco')?.value)||0;
+  const entrada = Number(document.getElementById('pEntrada')?.value)||0;
+  if(preco) document.getElementById('pRestante').value = Math.max(0,preco-entrada);
+}
+
+async function salvarProduto(){
+  const nome = document.getElementById('pNome').value.trim();
+  const catSel = document.getElementById('pCat').value;
+  const catCust = document.getElementById('pCatCustom').value.trim();
+  const categoria = catCust||catSel;
+  const descricao = document.getElementById('pDesc').value.trim();
+  const preco = Number(document.getElementById('pPreco').value)||0;
+  const entrada = Number(document.getElementById('pEntrada').value)||0;
+  const restante = Number(document.getElementById('pRestante').value)||Math.max(0,preco-entrada);
+  const parcelas = document.getElementById('pParcelas').value.trim();
+  const comissao = Number(document.getElementById('pComissao').value)||10;
+  const err = document.getElementById('prodErr');
+
+  if(!nome){ err.textContent='Nome é obrigatório.'; return; }
+  if(!categoria){ err.textContent='Selecione ou digite uma categoria.'; return; }
+  if(!preco){ err.textContent='Preço é obrigatório.'; return; }
+  err.textContent = '';
+
+  const data = { nome, categoria, descricao, preco, entrada, restante, parcelas, comissao, ativo:true };
+
+  try{
+    if(editProdId){
+      // Editar
+      await sb('PATCH','produtos?id=eq.'+editProdId, data);
+      const i = produtos.findIndex(p=>p.id===editProdId);
+      if(i>-1) produtos[i]={...produtos[i],...data};
+      toast('Produto atualizado!','ok');
+    } else {
+      // Criar
+      const res = await sb('POST','produtos',{...data, created_at:new Date().toISOString()});
+      if(res&&res[0]) produtos.unshift(res[0]);
+      else { data.id='p'+Date.now(); data.created_at=new Date().toISOString(); produtos.unshift(data); }
+      toast('Produto criado!','ok');
+    }
+  }catch(e){
+    // Fallback local se tabela não existir ainda
+    if(editProdId){
+      const i=produtos.findIndex(p=>p.id===editProdId);
+      if(i>-1) produtos[i]={...produtos[i],...data};
+    } else {
+      data.id='p'+Date.now(); data.created_at=new Date().toISOString(); produtos.unshift(data);
+    }
+    toast('Salvo localmente (execute o SQL para persistir)','inf');
+  }
+
+  syncProdutosComPlanos();
+  closeProduto();
+  renderProdutos();
+  renderCatFilter();
+  addHist('nota',(editProdId?'Produto editado: ':'Produto criado: ')+'<strong>'+nome+'</strong>');
+}
+
+async function deleteProduto(id){
+  if(!isAdmin()){ toast('Apenas administradores podem remover produtos','err'); return; }
+  const p = produtos.find(x=>x.id===id); if(!p) return;
+  if(!confirm('Remover o produto "'+p.nome+'"?\nLeads já vinculados mantêm o plano atual.')) return;
+  try{ await sb('DELETE','produtos?id=eq.'+id); }catch(e){}
+  produtos = produtos.filter(x=>x.id!==id);
+  syncProdutosComPlanos();
+  renderProdutos();
+  renderCatFilter();
+  addHist('nota','Produto removido: <strong>'+p.nome+'</strong>');
+  toast('Produto removido','inf');
 }
 
 
