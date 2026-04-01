@@ -657,8 +657,8 @@ tr:hover .td-acts{opacity:1}
             <select id="dashMesSel" class="sel" onchange="renderDash()" style="font-size:.7rem;padding:3px 8px"></select>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:.64rem;color:var(--textdim)" id="dashLastUpdate">Atualizando...</span>
-            <button onclick="loadData()" style="padding:4px 10px;border-radius:var(--rs);border:1px solid var(--border);background:var(--bg3);color:var(--textmid);font-size:.64rem;cursor:pointer;transition:.15s" onmouseover="this.style.color='#E2E8F0'" onmouseout="this.style.color='var(--textmid)'">↻ Atualizar</button>
+            <span style="font-size:.64rem;color:var(--textdim)" id="dashLastUpdate">—</span>
+            <button onclick="atualizarDash()" id="btnAtualizar" style="padding:4px 10px;border-radius:var(--rs);border:1px solid var(--border);background:var(--bg3);color:var(--textmid);font-size:.64rem;cursor:pointer;transition:.15s" onmouseover="this.style.color='#E2E8F0'" onmouseout="this.style.color='var(--textmid)'">↻ Atualizar</button>
           </div>
         </div>
         <!-- KPIs MÊS ATUAL -->
@@ -1534,6 +1534,16 @@ async function sb(m,p,b=null){
   const t=await r.text();return t?JSON.parse(t):null;
 }
 
+async function atualizarDash(){
+  const btn = document.getElementById('btnAtualizar');
+  const lbl = document.getElementById('dashLastUpdate');
+  if(btn){ btn.textContent='↻ Atualizando...'; btn.disabled=true; }
+  if(lbl){ lbl.textContent='Atualizando...'; lbl.style.color='var(--gold2)'; }
+  await loadData();
+  if(btn){ btn.textContent='↻ Atualizar'; btn.disabled=false; }
+  if(lbl){ lbl.textContent='Atualizado: '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); lbl.style.color='var(--textdim)'; }
+}
+
 async function loadData(){
   try{
     if(SU&&SK){recs=await sb('GET','leads?order=created_at.desc')||[];}
@@ -1709,7 +1719,6 @@ function renderDash(){
   const elById = id => document.getElementById(id);
 
   // Atualiza horário imediatamente
-  if(elById('dashLastUpdate')) elById('dashLastUpdate').textContent = 'Atualizado: '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 
   const mesCur = mesAtualBR(); // mês real de hoje em BRT
 
@@ -1755,7 +1764,6 @@ function renderDash(){
   const nomeAnt = nomeMesBR(_mesAnt);
 
   if(elById('dashMesLabel')) elById('dashMesLabel').textContent = '📅 ' + nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
-  if(elById('dashLastUpdate')) elById('dashLastUpdate').textContent = 'Atualizado: '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 
   // KPIs mês selecionado
   const totalMes = recsMes.length;
@@ -3439,10 +3447,15 @@ function catCor(cat){ return CAT_CORES[cat]||{bg:'rgba(255,255,255,.07)',color:'
 async function loadProdutos(){
   try{
     const data = await sb('GET','produtos?order=created_at.desc');
-    produtos = data||[];
+    if(Array.isArray(data)){
+      produtos = data; // respeita array vazio se usuário apagou tudo
+    } else {
+      if(!produtos.length) produtos = getProdutosPadrao();
+    }
   }catch(e){
-    // Tabela não existe ainda — usa produtos padrão migrados dos planos fixos
-    if(!produtos.length) produtos = getProdutosPadrao();
+    const errMsg = (e.message||'').toLowerCase();
+    const tabelaNaoExiste = errMsg.includes('does not exist') || errMsg.includes('relation') || errMsg.includes('42p01');
+    if(tabelaNaoExiste && !produtos.length) produtos = getProdutosPadrao();
   }
   syncProdutosComPlanos();
 }
@@ -4084,10 +4097,19 @@ function getFonteIco(f){ return FONTE_ICONES[f?.icone||f?.emoji]||FONTE_ICONES.d
 async function loadFontes(){
   try{
     const data = await sb('GET','fontes?order=created_at.asc');
-    if(data && data.length){ fontes = data; }
-    else { fontes = FONTES_PADRAO; }
+    // Se retornou array (mesmo vazio) = tabela existe, respeita o que tem
+    if(Array.isArray(data)){
+      fontes = data; // pode ser [] se o usuário apagou tudo — respeitamos isso
+    } else {
+      // data é null = tabela não existe ainda, usa padrão
+      fontes = FONTES_PADRAO;
+    }
   }catch(e){
-    if(!fontes.length) fontes = FONTES_PADRAO;
+    // Erro de conexão ou tabela não existe
+    const errMsg = (e.message||'').toLowerCase();
+    const tabelaNaoExiste = errMsg.includes('does not exist') || errMsg.includes('relation') || errMsg.includes('42p01');
+    if(tabelaNaoExiste || !fontes.length) fontes = FONTES_PADRAO;
+    // Se já tem fontes em memória (de sessão anterior), mantém
   }
   syncFontesGlobais();
 }
