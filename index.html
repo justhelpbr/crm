@@ -1438,12 +1438,13 @@ let SU = localStorage.getItem('jh_url') || 'https://bkhonsaijjagzirrpuxk.supabas
 // Função central de mês — usa sempre America/Sao_Paulo
 function mesBR(dateInput){
   try{
-    const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+    const d = (dateInput instanceof Date) ? dateInput : new Date(dateInput);
+    if(isNaN(d.getTime())) return '';
     return new Intl.DateTimeFormat('sv-SE',{
       timeZone:'America/Sao_Paulo',
       year:'numeric',
       month:'2-digit'
-    }).format(d); // retorna "YYYY-MM"
+    }).format(d);
   }catch(e){ return ''; }
 }
 function mesAtualBR(){ return mesBR(new Date()); }
@@ -1703,9 +1704,11 @@ function renderAll(){
 function renderDash(){
   const now = new Date();
   // Usa horário de Brasília (UTC-3) para não errar o mês
-  const mesCur = mesAtualBR();
-  const [yCur,mCur] = mesCur.split('-').map(Number);
-  const mesAntDate = new Date(yCur, mCur-2, 1);
+  const mesCur = mesAtualBR(); // "2026-03"
+
+  // Calcula mês anterior corretamente
+  const [yCur, mCur] = mesCur.split('-').map(Number);
+  const mesAntDate = new Date(yCur, mCur - 2, 15, 12, 0, 0); // dia 15 ao meio-dia = seguro contra timezone
   const mesAnt = mesBR(mesAntDate);
 
   // Popula select de meses disponíveis
@@ -1713,31 +1716,37 @@ function renderDash(){
   if(selMes){
     const mesesDisp = new Set([mesCur]);
     recs.forEach(r=>{ if(r.created_at) mesesDisp.add(mesBR(r.created_at)); });
-    const mesEscolhido = selMes.value || mesCur;
-    if(!selMes.value || selMes.innerHTML===''){
+    // Só repopula se estiver vazio
+    if(!selMes.options.length){
       selMes.innerHTML = [...mesesDisp].sort((a,b)=>b.localeCompare(a)).map(m=>
-        '<option value="'+m+'"'+(m===mesEscolhido?' selected':'')+'>'+nomeMesBR(m)+'</option>'
+        '<option value="'+m+'"'+(m===mesCur?' selected':'')+'>'+nomeMesBR(m)+'</option>'
       ).join('');
+    } else {
+      // Garante que todos os meses estão no select
+      [...mesesDisp].forEach(m=>{
+        if(![...selMes.options].find(o=>o.value===m)){
+          const o=document.createElement('option');
+          o.value=m; o.textContent=nomeMesBR(m);
+          selMes.appendChild(o);
+        }
+      });
     }
-    const mesFiltro = selMes.value || mesCur;
-    const mesAntFiltro = mesBR(new Date(Number(mesFiltro.split('-')[0]), Number(mesFiltro.split('-')[1])-2, 1));
-    const nomeMes = nomeMesBR(mesFiltro);
-    const nomeAnt = nomeMesBR(mesAntFiltro);
+  }
 
-    // Filtra por mês selecionado (não necessariamente o atual)
-    const recsMes = recs.filter(r=>mesBR(r.created_at)===mesFiltro);
-    const recsAnt = recs.filter(r=>mesBR(r.created_at)===mesAntFiltro);
-
-    if(el('dashMesLabel')) el('dashMesLabel').textContent = '📅 '+nomeMes.charAt(0).toUpperCase()+nomeMes.slice(1);
-  } // fim if(selMes)
-
-  // Usa recsMes/recsAnt do bloco acima, ou fallback para mês atual
+  // Mês selecionado no select (padrão = atual)
   const _mes = document.getElementById('dashMesSel')?.value || mesCur;
-  const _mesAnt = mesBR(new Date(Number(_mes.split('-')[0]), Number(_mes.split('-')[1])-2, 1));
-  const recsMes = recs.filter(r=>mesBR(r.created_at)===_mes);
-  const recsAnt = recs.filter(r=>mesBR(r.created_at)===_mesAnt);
+  // Mês anterior ao selecionado
+  const [_y, _m] = _mes.split('-').map(Number);
+  const _mesAntDate = new Date(_y, _m - 2, 15, 12, 0, 0);
+  const _mesAnt = mesBR(_mesAntDate);
+
+  // Filtra leads pelo mês selecionado e pelo anterior
+  const recsMes = recs.filter(r => mesBR(r.created_at) === _mes);
+  const recsAnt = recs.filter(r => mesBR(r.created_at) === _mesAnt);
   const nomeMes = nomeMesBR(_mes);
   const nomeAnt = nomeMesBR(_mesAnt);
+
+  if(el('dashMesLabel')) el('dashMesLabel').textContent = '📅 ' + nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
 
   // KPIs mês atual
   const totalMes = recsMes.length;
