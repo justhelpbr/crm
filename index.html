@@ -1716,157 +1716,150 @@ function renderAll(){
 // ═══ DASHBOARD ═══
 function renderDash(){
   const now = new Date();
-  const elById = id => document.getElementById(id);
+  const $ = id => document.getElementById(id);
 
-  // Atualiza horário imediatamente
+  // ── Mês selecionado ──────────────────────────────
+  const mesCur = mesAtualBR();
+  const baseRecs = getRecsVisiveis();
 
-  const mesCur = mesAtualBR(); // mês real de hoje em BRT
-
-  // Popula select de meses disponíveis com todos os meses que têm leads
-  const selMes = elById('dashMesSel');
+  // Popula select com todos os meses que têm leads
+  const selMes = $('dashMesSel');
   if(selMes){
-    const mesesDisp = new Set([mesCur]);
-    recs.forEach(r=>{ if(r.created_at){ const m=mesBR(r.created_at); if(m) mesesDisp.add(m); }});
-
-    // Determina qual mês selecionar por padrão:
-    // Se há leads no mês atual → atual; senão → mês mais recente com dados
-    const sorted = [...mesesDisp].sort((a,b)=>b.localeCompare(a));
-    // Mês padrão = mês mais recente com leads cadastrados (ignora mês atual se não tiver nada)
-    const mesesComDados = sorted.filter(m => recs.some(r => mesBR(r.created_at) === m));
-    const defaultMes = mesesComDados.length > 0 ? mesesComDados[0] : mesCur;
+    const mesesSet = new Set([mesCur]);
+    baseRecs.forEach(r=>{ const m=mesBR(r.created_at); if(m) mesesSet.add(m); });
+    const sorted = [...mesesSet].sort((a,b)=>b.localeCompare(a));
     const prevVal = selMes.value;
-
-    // Repopula sempre para garantir que todos os meses aparecem
-    selMes.innerHTML = sorted.map(m=>
-      '<option value="'+m+'">'+nomeMesBR(m)+'</option>'
-    ).join('');
-
-    // Mantém seleção anterior se válida, senão usa padrão
+    selMes.innerHTML = sorted.map(m=>'<option value="'+m+'">'+nomeMesBR(m)+'</option>').join('');
+    // Mantém seleção se válida; senão escolhe mês mais recente com dados
     if(prevVal && sorted.includes(prevVal)){
       selMes.value = prevVal;
     } else {
-      selMes.value = defaultMes;
+      const comDados = sorted.filter(m=>baseRecs.some(r=>mesBR(r.created_at)===m));
+      selMes.value = comDados.length ? comDados[0] : mesCur;
     }
   }
 
-  // Mês selecionado
-  const _mes = elById('dashMesSel')?.value || mesCur;
-  // Mês anterior ao selecionado (dia 15, 12h = seguro contra timezone)
-  const [_y, _m] = _mes.split('-').map(Number);
-  const _mesAntDate = new Date(_y, _m - 2, 15, 12, 0, 0);
-  const _mesAnt = mesBR(_mesAntDate);
+  const mes    = $('dashMesSel')?.value || mesCur;
+  const [my,mm] = mes.split('-').map(Number);
+  const mesAnt = mesBR(new Date(my, mm-2, 15, 12, 0, 0));
+  const nomeMes = nomeMesBR(mes);
+  const nomeAnt = nomeMesBR(mesAnt);
 
-  // Filtra leads pelo mês selecionado usando getRecsVisiveis (respeita filtro por colaborador)
-  const baseRecs = getRecsVisiveis();
-  const recsMes = baseRecs.filter(r => mesBR(r.created_at) === _mes);
-  const recsAnt = baseRecs.filter(r => mesBR(r.created_at) === _mesAnt);
-  const nomeMes = nomeMesBR(_mes);
-  const nomeAnt = nomeMesBR(_mesAnt);
+  // ── Filtra por mês ───────────────────────────────
+  const recsMes = baseRecs.filter(r => mesBR(r.created_at) === mes);
+  const recsAnt = baseRecs.filter(r => mesBR(r.created_at) === mesAnt);
 
-  if(elById('dashMesLabel')) elById('dashMesLabel').textContent = '📅 ' + nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
-
-  // KPIs mês selecionado
-  const totalMes = recsMes.length;
-  const totalAll = baseRecs.length;
-  const ganhosMes = recsMes.filter(r=>r.estagio==='Ganho fechado').length;
-  const ganhosAll = baseRecs.filter(r=>r.estagio==='Ganho fechado').length;
-  const ativos = baseRecs.filter(r=>!['Ganho fechado','Cancelado','Congelado'].includes(r.estagio)).length;
-  const entMes = recsMes.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
-  const entAll = baseRecs.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
-  // Receita: sempre usa os valores reais armazenados no lead
-  // valor_entrada + valor_restante = valor total do contrato
-  // Se não tiver, tenta PVALS pelo nome do plano como fallback
-  function getValorPlano(r){
-    // 1. Tenta PVALS (produto cadastrado com nome exato)
+  // ── Helper: valor total do contrato ─────────────
+  function vContrato(r){
     if(PVALS[r.plano]) return PVALS[r.plano];
-    // 2. Tenta entrada + restante salvos no lead
-    const ent = Number(r.valor_entrada)||0;
-    const rest = Number(r.valor_restante)||0;
-    if(ent + rest > 0) return ent + rest;
-    // 3. Se tem entrada mas não tem restante, usa só a entrada como mínimo
-    if(ent > 0) return ent;
-    return 0;
+    const e = Number(r.valor_entrada)||0;
+    const rt = Number(r.valor_restante)||0;
+    return e + rt > 0 ? e + rt : e;
   }
-  // Taxa de comissão: usa a do produto se existir, senão 10%
-  function getTaxaComissao(r){
-    const prod = produtos.find(p=>p.nome===r.plano);
-    return (prod?.comissao||TAXA_COMISSAO*100) / 100;
+  function taxa(r){ const p=produtos.find(x=>x.nome===r.plano); return (p?.comissao||10)/100; }
+
+  // ── KPIs ─────────────────────────────────────────
+  const totalMes   = recsMes.length;
+  const totalAll   = baseRecs.length;
+  const ganhosMes  = recsMes.filter(r=>r.estagio==='Ganho fechado').length;
+  const ganhosAll  = baseRecs.filter(r=>r.estagio==='Ganho fechado').length;
+  const ativos     = baseRecs.filter(r=>!['Ganho fechado','Cancelado','Congelado'].includes(r.estagio)).length;
+  const entMes     = recsMes.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
+  const entAll     = baseRecs.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
+  const recBruta   = baseRecs.reduce((s,r)=>s+vContrato(r),0);
+  const comTotal   = baseRecs.filter(r=>r.estagio==='Ganho fechado').reduce((s,r)=>s+Math.round(vContrato(r)*taxa(r)),0);
+  const comPago    = baseRecs.filter(r=>r.estagio==='Ganho fechado'&&r.comissao_status==='pago').reduce((s,r)=>s+Math.round(vContrato(r)*taxa(r)),0);
+  const recLiq     = recBruta - comTotal;
+
+  // ── KPIs mês anterior ────────────────────────────
+  const totalAnt   = recsAnt.length;
+  const ganhosAnt  = recsAnt.filter(r=>r.estagio==='Ganho fechado').length;
+  const entAnt     = recsAnt.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
+  const recBrutaAnt= recsAnt.reduce((s,r)=>s+vContrato(r),0);
+  const comAnt     = recsAnt.filter(r=>r.estagio==='Ganho fechado').reduce((s,r)=>s+Math.round(vContrato(r)*taxa(r)),0);
+  const recLiqAnt  = recBrutaAnt - comAnt;
+
+  // ── Atualiza labels ──────────────────────────────
+  if($('dashMesLabel')) $('dashMesLabel').textContent = '📅 '+nomeMes.charAt(0).toUpperCase()+nomeMes.slice(1);
+  if($('dDate'))        $('dDate').textContent = now.toLocaleDateString('pt-BR');
+
+  // ── KPI cards ────────────────────────────────────
+  if($('k1')){ $('k1').textContent=totalMes;   $('k1sub').textContent=totalAll+' total'; }
+  if($('k2')){ $('k2').textContent=ativos;      $('k2sub').textContent='em andamento'; }
+  if($('k3')){ $('k3').textContent=ganhosMes;   $('k3sub').textContent=ganhosAll+' total'; }
+  if($('k4')){ $('k4').textContent='R$'+entMes.toLocaleString('pt-BR'); $('k4sub').textContent='R$'+entAll.toLocaleString('pt-BR')+' total'; }
+  if($('k5')){ $('k5').textContent='R$'+recBruta.toLocaleString('pt-BR'); $('k5sub').textContent='todos os contratos'; }
+  if($('k6')){ $('k6').textContent='R$'+comTotal.toLocaleString('pt-BR'); $('k6sub').textContent='R$'+comPago.toLocaleString('pt-BR')+' já pago'; }
+  if($('k7')){ $('k7').textContent='R$'+recLiq.toLocaleString('pt-BR'); $('k7sub').textContent='bruto − comissões'; }
+
+  // ── Comparativo ───────────────────────────────────
+  function varPct(cur,prev){
+    if(!prev) return cur>0?'+100%':'—';
+    const p=Math.round((cur-prev)/prev*100);
+    return (p>=0?'+':'')+p+'%';
   }
-  const recAll = baseRecs.reduce((s,r)=>s+getValorPlano(r),0);
-  const comTotal = baseRecs.filter(r=>r.estagio==='Ganho fechado').reduce((s,r)=>s+Math.round(getValorPlano(r)*getTaxaComissao(r)),0);
-  const comPago  = baseRecs.filter(r=>r.estagio==='Ganho fechado'&&r.comissao_status==='pago').reduce((s,r)=>s+Math.round(getValorPlano(r)*getTaxaComissao(r)),0);
-  const recLiq   = recAll - comTotal;
-
-  // KPIs mês anterior (comparativo)
-  const totalAnt = recsAnt.length;
-  const ganhosAntN = recsAnt.filter(r=>r.estagio==='Ganho fechado').length;
-  const entAnt = recsAnt.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
-
-  // Atualiza KPIs na tela
-  const el = id => document.getElementById(id);
-  if(el('k1')){ el('k1').textContent=totalMes; el('k1sub').textContent=totalAll+' total'; }
-  if(el('k2')){ el('k2').textContent=ativos; el('k2sub').textContent='em andamento'; }
-  if(el('k3')){ el('k3').textContent=ganhosMes; el('k3sub').textContent=ganhosAll+' total'; }
-  if(el('k4')){ el('k4').textContent='R$'+entMes.toLocaleString('pt-BR'); el('k4sub').textContent='R$'+entAll.toLocaleString('pt-BR')+' total'; }
-  if(el('k5')){ el('k5').textContent='R$'+recAll.toLocaleString('pt-BR'); el('k5sub').textContent='todos os planos'; }
-  if(el('k6')){ el('k6').textContent='R$'+comTotal.toLocaleString('pt-BR'); el('k6sub').textContent='R$'+comPago.toLocaleString('pt-BR')+' já pago'; }
-  if(el('k7')){ el('k7').textContent='R$'+recLiq.toLocaleString('pt-BR'); el('k7sub').textContent='bruto − comissões'; }
-  if(el('dDate')) el('dDate').textContent=now.toLocaleDateString('pt-BR');
-
-  // Comparativo
-  function varPct(cur,prev){ if(!prev) return cur>0?'+100%':'—'; const p=Math.round((cur-prev)/prev*100); return (p>=0?'+':'')+p+'%'; }
   function varCor(cur,prev){ return cur>=prev?'var(--green2)':'var(--red2)'; }
-  const compItems=[
-    {l:'Leads',cur:totalMes,prev:totalAnt,fmt:v=>v},
-    {l:'Ganhos',cur:ganhosMes,prev:ganhosAntN,fmt:v=>v},
-    {l:'Entradas',cur:entMes,prev:entAnt,fmt:v=>'R$'+v.toLocaleString('pt-BR')},
-    {l:'Rec. Líquida',
-      cur:entMes-Math.round(recsMes.filter(r=>r.estagio==='Ganho fechado').reduce((s,r)=>s+planoVal(r)*comissaoRate(r),0)),
-      prev:entAnt-Math.round(recsAnt.filter(r=>r.estagio==='Ganho fechado').reduce((s,r)=>s+planoVal(r)*comissaoRate(r),0)),
-      fmt:v=>'R$'+Math.max(0,v).toLocaleString('pt-BR')},
-  ];
-  if(el('comparativo')) el('comparativo').innerHTML=compItems.map(item=>`
-    <div style="background:var(--bg3);border-radius:var(--rs);padding:10px;text-align:center">
-      <div style="font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--textdim);margin-bottom:4px">${item.l}</div>
-      <div style="font-family:Montserrat,sans-serif;font-size:1.1rem;font-weight:900;margin-bottom:2px">${item.fmt(item.cur)}</div>
-      <div style="font-size:.62rem;color:${varCor(item.cur,item.prev)}">${varPct(item.cur,item.prev)} vs ${nomeMesBR(mesAnt).split(' ')[0]}</div>
-    </div>`).join('');
 
-  // Formas de pagamento do mês
-  const pagMes = {};
+  const fmtR = v => 'R$'+v.toLocaleString('pt-BR');
+  const compItems = [
+    {l:'Leads',      cur:totalMes,   prev:totalAnt,   fmt:v=>v},
+    {l:'Ganhos',     cur:ganhosMes,  prev:ganhosAnt,  fmt:v=>v},
+    {l:'Entradas',   cur:entMes,     prev:entAnt,     fmt:fmtR},
+    {l:'Rec. Bruta', cur:recBruta,   prev:recBrutaAnt,fmt:fmtR},
+    {l:'Comissões',  cur:comTotal,   prev:comAnt,     fmt:fmtR},
+    {l:'Rec. Líq.',  cur:recLiq,     prev:recLiqAnt,  fmt:fmtR},
+  ];
+
+  if($('comparativo')){
+    $('comparativo').style.gridTemplateColumns = 'repeat('+compItems.length+',1fr)';
+    $('comparativo').innerHTML = compItems.map(item=>`
+      <div style="background:var(--bg3);border-radius:var(--rs);padding:10px;text-align:center">
+        <div style="font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--textdim);margin-bottom:4px">${item.l}</div>
+        <div style="font-family:Montserrat,sans-serif;font-size:1rem;font-weight:900;margin-bottom:2px">${item.fmt(item.cur)}</div>
+        <div style="font-size:.6rem;color:${varCor(item.cur,item.prev)}">${varPct(item.cur,item.prev)} vs ${nomeAnt.split(' ')[0]}</div>
+      </div>`).join('');
+  }
+
+  // ── Formas de pagamento ───────────────────────────
+  const pagMes={};
   recsMes.forEach(r=>{const p=r.forma_pagamento||'PIX';pagMes[p]=(pagMes[p]||{n:0,v:0});pagMes[p].n++;pagMes[p].v+=Number(r.valor_entrada)||0;});
-  const pagIcos = {'PIX':'💰','PIX Parcelado':'💠','Cartão de Crédito':'💳','PIX + Cartão':'💰+💳'};
-  const pagCors = {'PIX':'var(--green2)','PIX Parcelado':'#A78BFA','Cartão de Crédito':'var(--blue)','PIX + Cartão':'var(--teal)'};
-  if(el('pagChart')){
-    const allPag = ['PIX','PIX Parcelado','Cartão de Crédito','PIX + Cartão'];
-    el('pagChart').innerHTML = allPag.map(p=>`
+  const pagCors={'PIX':'var(--green2)','PIX Parcelado':'#A78BFA','Cartão de Crédito':'var(--blue)','PIX + Cartão':'var(--teal)'};
+  const pagLabels={'PIX':'💰 PIX','PIX Parcelado':'💠 PIX Parc.','Cartão de Crédito':'💳 Cartão','PIX + Cartão':'💰+💳 Misto'};
+  if($('pagChart')){
+    const allPag=['PIX','PIX Parcelado','Cartão de Crédito','PIX + Cartão'];
+    $('pagChart').innerHTML=allPag.map(p=>`
       <div style="background:var(--bg3);border-radius:var(--rs);padding:12px;text-align:center;border:1px solid var(--border)">
-        <div style="font-size:1.4rem;margin-bottom:4px">${pagIcos[p]||'💰'}</div>
-        <div style="font-size:.66rem;font-weight:700;color:var(--textdim);margin-bottom:4px">${p}</div>
+        <div style="font-size:.7rem;font-weight:700;color:var(--textdim);margin-bottom:6px">${pagLabels[p]||p}</div>
         <div style="font-family:Montserrat,sans-serif;font-size:1rem;font-weight:900;color:${pagCors[p]||'var(--green2)'}">${pagMes[p]?pagMes[p].n+' pag.':'—'}</div>
         <div style="font-size:.64rem;color:var(--textdim)">${pagMes[p]?'R$ '+pagMes[p].v.toLocaleString('pt-BR'):'R$ 0'}</div>
       </div>`).join('');
   }
 
-  // Funil
-  const sc={};NESTAGES.forEach(s=>sc[s]=0);recs.forEach(r=>{if(sc[r.estagio]!==undefined)sc[r.estagio]++;});
+  // ── Funil ─────────────────────────────────────────
+  const sc={};NESTAGES.forEach(s=>sc[s]=0);baseRecs.forEach(r=>{if(sc[r.estagio]!==undefined)sc[r.estagio]++;});
   const mx=Math.max(...Object.values(sc),1);
-  if(el('funnelC')) el('funnelC').innerHTML=NESTAGES.filter(s=>sc[s]>0).map(s=>
-    '<div class="f-row"><div class="f-dot" style="background:'+(ECLR[s]||'#555')+'"></div><div class="f-name" title="'+s+'">'+s+'</div><div class="f-bw"><div class="f-b" style="width:'+(sc[s]/mx*100)+'%;background:'+(ECLR[s]||'#555')+'"></div></div><div class="f-cnt" style="color:'+(ECLR[s]||'#aaa')+'">'+sc[s]+'</div></div>'
+  if($('funnelC')) $('funnelC').innerHTML=NESTAGES.filter(s=>sc[s]>0).map(s=>
+    '<div class="f-row"><div class="f-dot" style="background:'+(ECLR[s]||'#555')+'"></div>'
+    +'<div class="f-name" title="'+s+'">'+s+'</div>'
+    +'<div class="f-bw"><div class="f-b" style="width:'+(sc[s]/mx*100)+'%;background:'+(ECLR[s]||'#555')+'"></div></div>'
+    +'<div class="f-cnt" style="color:'+(ECLR[s]||'#aaa')+'">'+sc[s]+'</div></div>'
   ).join('');
 
-  // Fonte
-  const fc={};recs.forEach(r=>{const f=r.fonte||'Outros';fc[f]=(fc[f]||0)+1;});
-  if(el('fonteC')) el('fonteC').innerHTML=Object.entries(fc).sort((a,b)=>b[1]-a[1]).map(([f,cnt])=>
+  // ── Fonte dos leads ───────────────────────────────
+  const fc={};baseRecs.forEach(r=>{const f=r.fonte||'Outros';fc[f]=(fc[f]||0)+1;});
+  if($('fonteC')) $('fonteC').innerHTML=Object.entries(fc).sort((a,b)=>b[1]-a[1]).map(([f,cnt])=>
     '<div class="src-row"><div style="display:flex;align-items:center;gap:5px"><div class="f-dot" style="background:'+(FCLR[f]||'#555')+'"></div><span style="color:var(--textmid)">'+f+'</span></div><div style="font-weight:700;color:'+(FCLR[f]||'#aaa')+'">'+cnt+'</div></div>'
   ).join('');
 
-  // Owner
-  const oc={};recs.forEach(r=>{const o=r.responsavel||'JustHelp';oc[o]=(oc[o]||0)+1;});
-  if(el('ownerC')) el('ownerC').innerHTML=Object.entries(oc).sort((a,b)=>b[1]-a[1]).map(([o,cnt])=>
-    '<div class="ow-row"><div class="ow-av">'+o.split(' ').map(w=>w[0]).slice(0,2).join('')+'</div><div style="flex:1;font-size:.7rem;color:var(--textmid);margin-left:6px">'+o+'</div><div style="font-size:.72rem;font-weight:700">'+cnt+'</div></div>'
+  // ── Responsáveis ──────────────────────────────────
+  const oc={};baseRecs.forEach(r=>{const o=r.responsavel||'JustHelp';oc[o]=(oc[o]||0)+1;});
+  if($('ownerC')) $('ownerC').innerHTML=Object.entries(oc).sort((a,b)=>b[1]-a[1]).map(([o,cnt])=>
+    '<div class="ow-row"><div class="ow-av">'+o.split(' ').map(w=>w[0]).slice(0,2).join('')+'</div>'
+    +'<div style="flex:1;font-size:.7rem;color:var(--textmid);margin-left:6px">'+o+'</div>'
+    +'<div style="font-size:.72rem;font-weight:700">'+cnt+'</div></div>'
   ).join('');
 }
+
 
 // ═══ TABLE ═══
 function getFiltered(){
