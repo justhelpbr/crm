@@ -4142,28 +4142,45 @@ const FONTE_ICONES = {
 function getFonteIco(f){ return FONTE_ICONES[f?.icone||f?.emoji]||FONTE_ICONES.default; }
 
 async function loadFontes(){
+  // 1. Primeiro carrega do localStorage (instantâneo, sempre disponível)
+  const local = localStorage.getItem('jh_fontes');
+  if(local){
+    try{
+      const parsed = JSON.parse(local);
+      if(Array.isArray(parsed)) fontes = parsed;
+    }catch(e){}
+  }
+
+  // 2. Tenta sincronizar com Supabase em background
   try{
     const data = await sb('GET','fontes?order=created_at.asc');
-    if(Array.isArray(data)){
-      // Tabela existe — usa dados do banco (mesmo se vazio = usuário apagou)
+    if(Array.isArray(data) && data.length > 0){
+      // Banco tem dados — usa banco e atualiza local
       fontes = data;
-      // Atualiza backup local com dados do banco
-      try{ localStorage.setItem('jh_fontes_bkp', JSON.stringify(fontes)); }catch(e){}
-    } else {
-      // Banco retornou null — tenta backup local, senão usa padrão
-      const bkp = localStorage.getItem('jh_fontes_bkp');
-      if(bkp){ try{ fontes = JSON.parse(bkp)||[]; }catch(e){ fontes = FONTES_PADRAO; } }
-      else fontes = FONTES_PADRAO;
+      localStorage.setItem('jh_fontes', JSON.stringify(fontes));
+    } else if(Array.isArray(data) && data.length === 0 && fontes.length > 0){
+      // Banco vazio mas local tem dados — sincroniza banco com local
+      for(const f of fontes){
+        if(!f.id || f.id.startsWith('f')) continue; // skip IDs temporários
+        try{ await sb('POST','fontes',f); }catch(e){}
+      }
+    } else if(!Array.isArray(data) && !fontes.length){
+      fontes = FONTES_PADRAO;
+      localStorage.setItem('jh_fontes', JSON.stringify(fontes));
     }
   }catch(e){
-    // Erro de rede ou tabela inexistente — tenta backup local
-    const bkp = localStorage.getItem('jh_fontes_bkp');
-    if(bkp){ try{ fontes = JSON.parse(bkp)||[]; }catch(ex){ fontes = FONTES_PADRAO; } }
-    else if(!fontes.length) fontes = FONTES_PADRAO;
-    console.warn('loadFontes fallback localStorage:', e.message);
+    // Failed to fetch ou outro erro — usa o que já carregou do localStorage
+    if(!fontes.length) fontes = FONTES_PADRAO;
+    console.warn('Supabase offline, usando localStorage:', e.message);
   }
   syncFontesGlobais();
 }
+
+function saveFontesLocal(){
+  try{ localStorage.setItem('jh_fontes', JSON.stringify(fontes)); }catch(e){}
+}
+
+
 
 function syncFontesGlobais(){
   // Atualiza FCLR dinamicamente
@@ -4322,56 +4339,47 @@ async function salvarFonte(){
   }
   const icone = document.getElementById('fnEmoji').value.trim() || fonteEmojiSel || 'default';
   const cor = document.getElementById('fnCor').value || fonteCorSel || '#3B82F6';
-  const payload = {nome, descricao:document.getElementById('fnDesc').value.trim(), icone, cor, ativo:true};
+  const descricao = document.getElementById('fnDesc').value.trim();
+  const payload = {nome, descricao, icone, cor, ativo:true};
   err.textContent='';
 
-  let salvouNoBanco = false;
-
-  try{
-    if(editFonteId){
-      await sb('PATCH','fontes?id=eq.'+editFonteId, payload);
-      const i = fontes.findIndex(f=>f.id===editFonteId);
-      if(i>-1) fontes[i]={...fontes[i],...payload};
-      salvouNoBanco = true;
-      toast('Fonte atualizada!','ok');
-    } else {
-      const res = await sb('POST','fontes',{...payload, created_at:new Date().toISOString()});
-      if(res&&res[0]){
-        fontes.push(res[0]);
-      } else {
-        payload.id='f'+Date.now(); payload.created_at=new Date().toISOString();
-        fontes.push(payload);
-      }
-      salvouNoBanco = true;
-      toast('Fonte criada!','ok');
-    }
-  }catch(e){
-    // Salva em memória mesmo que o banco falhe
-    if(!editFonteId){
-      payload.id='f'+Date.now(); payload.created_at=new Date().toISOString();
-      fontes.push(payload);
-    } else {
-      const i=fontes.findIndex(f=>f.id===editFonteId);
-      if(i>-1) fontes[i]={...fontes[i],...payload};
-    }
-    const msg = (e.message||e||'').toLowerCase();
-    if(msg.includes('does not exist')||msg.includes('relation')||msg.includes('42p01')){
-      // Tabela não existe — mostra SQL
-      toast('Tabela "fontes" não existe no Supabase. Execute o SQL no painel!','err');
-      const sql = `CREATE TABLE IF NOT EXISTS fontes (\n  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,\n  nome text NOT NULL UNIQUE,\n  descricao text,\n  icone text DEFAULT 'default',\n  cor text DEFAULT '#3B82F6',\n  ativo boolean DEFAULT true,\n  created_at timestamptz DEFAULT now()\n);\nALTER TABLE fontes ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "pub_f" ON fontes FOR ALL USING (true) WITH CHECK (true);`;
-      err.innerHTML = '⚠️ Execute este SQL no Supabase:<br><pre style="font-size:.6rem;background:var(--bg4);padding:8px;border-radius:4px;margin-top:4px;overflow-x:auto;white-space:pre-wrap">'+sql+'</pre>';
-    } else {
-      toast('Erro ao salvar no banco: '+e.message,'err');
-      console.error('Erro salvarFonte:', e);
-    }
+  if(editFonteId){
+    // Atualiza em memória
+    const i = fontes.findIndex(f=>f.id===editFonteId);
+    if(i>-1) fontes[i]={...fontes[i],...payload};
+  } else {
+    // Cria com ID temporário
+    payload.id = 'f'+Date.now();
+    payload.created_at = new Date().toISOString();
+    fontes.push(payload);
   }
 
+  // Salva no localStorage IMEDIATAMENTE (persiste mesmo sem banco)
+  saveFontesLocal();
   syncFontesGlobais();
   closeFonte();
   renderFontes();
   syncSelFontes();
-  if(salvouNoBanco) addHist('nota',(editFonteId?'Fonte editada: ':'Fonte criada: ')+'<strong>'+nome+'</strong>');
+  toast(editFonteId?'Fonte atualizada!':'Fonte criada!','ok');
+
+  // Tenta sincronizar com Supabase em background (não bloqueia)
+  try{
+    if(editFonteId){
+      await sb('PATCH','fontes?id=eq.'+editFonteId, {nome, descricao, icone, cor, ativo:true});
+    } else {
+      const res = await sb('POST','fontes',{...payload});
+      // Atualiza ID para o UUID real do banco
+      if(res&&res[0]){
+        const i = fontes.findIndex(f=>f.id===payload.id);
+        if(i>-1){ fontes[i]={...fontes[i],...res[0]}; saveFontesLocal(); }
+      }
+    }
+  }catch(e){
+    // Banco offline — dados já estão salvos no localStorage, não perde nada
+    console.warn('Supabase offline ao salvar fonte, dado salvo localmente:', e.message);
+  }
 }
+
 
 
 async function deleteFonte(id){
@@ -4379,12 +4387,19 @@ async function deleteFonte(id){
   const f = fontes.find(x=>x.id===id); if(!f) return;
   const usada = recs.filter(r=>r.fonte===f.nome).length;
   if(usada > 0 && !confirm('Esta fonte está em uso por '+usada+' lead(s).\nRemover mesmo assim?')) return;
-  try{ await sb('DELETE','fontes?id=eq.'+id); }catch(e){}
+  
+  // Remove localmente primeiro
   fontes = fontes.filter(x=>x.id!==id);
+  saveFontesLocal();
   syncFontesGlobais();
   renderFontes();
   syncSelFontes();
   toast('Fonte removida','inf');
+  
+  // Tenta remover do banco em background
+  try{ await sb('DELETE','fontes?id=eq.'+id); }catch(e){
+    console.warn('Supabase offline ao deletar fonte:', e.message);
+  }
 }
 
 // Sincroniza todos os selects de fonte no formulário e toolbar
