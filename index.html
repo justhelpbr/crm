@@ -669,9 +669,9 @@ tr:hover .td-acts{opacity:1}
           <div class="kpi"><div class="kpi-bar" style="background:var(--red2)"></div><div class="kpi-lbl">Entradas Este Mês</div><div class="kpi-val" style="color:var(--red2)" id="k4">R$0</div><div class="kpi-sub" id="k4sub">R$0 total</div></div>
         </div>
         <div class="kpi-row" style="grid-template-columns:repeat(3,1fr);margin-top:-4px">
-          <div class="kpi"><div class="kpi-bar" style="background:var(--teal)"></div><div class="kpi-lbl">Receita Bruta Projetada</div><div class="kpi-val" style="color:var(--teal)" id="k5">R$0</div><div class="kpi-sub" id="k5sub">todos os planos</div></div>
-          <div class="kpi"><div class="kpi-bar" style="background:#A78BFA"></div><div class="kpi-lbl">Total Comissões (10%)</div><div class="kpi-val" style="color:#A78BFA" id="k6">R$0</div><div class="kpi-sub" id="k6sub">R$0 já pago</div></div>
-          <div class="kpi" style="border-color:rgba(0,180,162,.3)"><div class="kpi-bar" style="background:linear-gradient(90deg,var(--teal),var(--green2))"></div><div class="kpi-lbl">Receita Líquida</div><div class="kpi-val" style="color:var(--green2)" id="k7">R$0</div><div class="kpi-sub" id="k7sub">bruto − comissões</div></div>
+          <div class="kpi"><div class="kpi-bar" style="background:var(--teal)"></div><div class="kpi-lbl">Entradas Recebidas</div><div class="kpi-val" style="color:var(--teal)" id="k5">R$0</div><div class="kpi-sub" id="k5sub">0 com entrada</div></div>
+          <div class="kpi"><div class="kpi-bar" style="background:#A78BFA"></div><div class="kpi-lbl">Custo + Comissões</div><div class="kpi-val" style="color:#A78BFA" id="k6">R$0</div><div class="kpi-sub" id="k6sub">R$0 custo + R$0 comissão</div></div>
+          <div class="kpi" style="border-color:rgba(0,180,162,.3)"><div class="kpi-bar" style="background:linear-gradient(90deg,var(--teal),var(--green2))"></div><div class="kpi-lbl">Receita Líquida</div><div class="kpi-val" style="color:var(--green2)" id="k7">R$0</div><div class="kpi-sub" id="k7sub">entradas − custo − comissões</div></div>
         </div>
         <!-- COMPARATIVO MÊS -->
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:12px">
@@ -1462,6 +1462,15 @@ let currentUser = null, histLog = [];
 // ═══ CONSTANTES ═══
 const LSTATUS = ['Novo Lead','Em Atendimento','Retornar','Duplicado','Perdeu o Interesse','Nao Ligar Mais'];
 const NESTAGES = ['Proposta de preco','Negociacao/Revisao','Invoice emitida','Invoice Paga','Contrato Enviado','Aguardando Assinatura Cliente','Contrato Assinado','Ganho fechado','Caso Aprovado','Caso Reprovado','Correcao','Financeiro','Enviado','Cancelado','Congelado','Enviado Com Disclaimer'];
+
+// Estágios que representam processo com PAGAMENTO CONFIRMADO (entrada paga)
+const ESTAGIOS_PAGOU = ['Invoice Paga','Contrato Assinado','Ganho fechado','Caso Aprovado','Financeiro','Enviado','Enviado Com Disclaimer'];
+// Estágios que representam processo FECHADO/GANHO (processo concluído)
+const ESTAGIOS_GANHO = ['Ganho fechado','Caso Aprovado'];
+// Verifica se lead tem entrada paga
+function leadPagou(r){ return ESTAGIOS_PAGOU.includes(r.estagio) && (Number(r.valor_entrada)||0) > 0; }
+// Verifica se processo foi ganho/fechado
+function leadGanho(r){ return ESTAGIOS_GANHO.includes(r.estagio); }
 const CSTATUS = ['Atendimento','Nao Atendeu','Nao Ligar Mais'];
 const PLANOS = [
   'A Vista R$900',
@@ -1766,26 +1775,41 @@ function renderDash(){
   // ── KPIs ─────────────────────────────────────────
   const totalMes   = recsMes.length;
   const totalAll   = baseRecs.length;
-  const ganhosMes  = recsMes.filter(r=>r.estagio==='Ganho fechado').length;
-  const ganhosAll  = baseRecs.filter(r=>r.estagio==='Ganho fechado').length;
+  const ganhosMes  = recsMes.filter(r=>leadGanho(r)).length;
+  const ganhosAll  = baseRecs.filter(r=>leadGanho(r)).length;
   const ativos     = baseRecs.filter(r=>!['Ganho fechado','Cancelado','Congelado'].includes(r.estagio)).length;
   const entMes     = recsMes.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
   const entAll     = baseRecs.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
-  const ganhosMesN = recsMes.filter(r=>r.estagio==='Ganho fechado').length;
-  const recBruta   = baseRecs.reduce((s,r)=>s+vContrato(r),0);
-  const comTotal   = baseRecs.filter(r=>r.estagio==='Ganho fechado').reduce((s,r)=>s+Math.round(vContrato(r)*taxa(r)),0);
-  const comPago    = baseRecs.filter(r=>r.estagio==='Ganho fechado'&&r.comissao_status==='pago').reduce((s,r)=>s+Math.round(vContrato(r)*taxa(r)),0);
-  const custoTotal = baseRecs.filter(r=>r.estagio==='Ganho fechado').length * CUSTO_SERVICO;
-  const recLiq     = recBruta - comTotal - custoTotal;
 
-  // ── KPIs mês anterior ────────────────────────────
-  const totalAnt   = recsAnt.length;
-  const ganhosAnt  = recsAnt.filter(r=>r.estagio==='Ganho fechado').length;
-  const entAnt     = recsAnt.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
-  const recBrutaAnt= recsAnt.reduce((s,r)=>s+vContrato(r),0);
-  const comAnt     = recsAnt.filter(r=>r.estagio==='Ganho fechado').reduce((s,r)=>s+Math.round(vContrato(r)*taxa(r)),0);
-  const custoAnt   = recsAnt.filter(r=>r.estagio==='Ganho fechado').length * CUSTO_SERVICO;
-  const recLiqAnt  = recBrutaAnt - comAnt - custoAnt;
+  // ── Financeiro ───────────────────────────────────
+  // Leads com entrada = qualquer lead que tenha valor_entrada > 0
+  // → no momento que recebe a entrada já paga o custo do serviço (R$160)
+  const leadsComEntrada    = recsMes.filter(r=>(Number(r.valor_entrada)||0)>0);
+  const leadsComEntradaAnt = recsAnt.filter(r=>(Number(r.valor_entrada)||0)>0);
+  const leadsGanhos        = recsMes.filter(r=>leadGanho(r));
+  const leadsGanhosAnt     = recsAnt.filter(r=>leadGanho(r));
+
+  // Receita Bruta = soma das entradas efetivamente recebidas no mês
+  const recBruta    = leadsComEntrada.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
+  const recBrutaAnt = leadsComEntradaAnt.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
+
+  // Custo serviço = R$160 × nº leads com entrada (paga no ato da entrada)
+  const custoTotal  = leadsComEntrada.length * CUSTO_SERVICO;
+  const custoAnt    = leadsComEntradaAnt.length * CUSTO_SERVICO;
+
+  // Comissões = 10% sobre valor total dos contratos GANHOS
+  const comTotal    = leadsGanhos.reduce((s,r)=>s+Math.round(vContrato(r)*taxa(r)),0);
+  const comPago     = leadsGanhos.filter(r=>r.comissao_status==='pago').reduce((s,r)=>s+Math.round(vContrato(r)*taxa(r)),0);
+  const comAnt      = leadsGanhosAnt.reduce((s,r)=>s+Math.round(vContrato(r)*taxa(r)),0);
+
+  // Receita Líquida = Entradas − Custo Serviço − Comissões dos ganhos
+  const recLiq      = recBruta - custoTotal - comTotal;
+  const recLiqAnt   = recBrutaAnt - custoAnt - comAnt;
+
+  // ── KPIs mês anterior (para comparativo) ─────────
+  const totalAnt  = recsAnt.length;
+  const ganhosAnt = recsAnt.filter(r=>leadGanho(r)).length;
+  const entAnt    = recsAnt.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
 
   // ── Atualiza labels ──────────────────────────────
   if($('dashMesLabel')) $('dashMesLabel').textContent = '📅 '+nomeMes.charAt(0).toUpperCase()+nomeMes.slice(1);
@@ -1796,9 +1820,9 @@ function renderDash(){
   if($('k2')){ $('k2').textContent=ativos;      $('k2sub').textContent='em andamento'; }
   if($('k3')){ $('k3').textContent=ganhosMes;   $('k3sub').textContent=ganhosAll+' total'; }
   if($('k4')){ $('k4').textContent='R$'+entMes.toLocaleString('pt-BR'); $('k4sub').textContent='R$'+entAll.toLocaleString('pt-BR')+' total'; }
-  if($('k5')){ $('k5').textContent='R$'+recBruta.toLocaleString('pt-BR'); $('k5sub').textContent='todos os contratos'; }
-  if($('k6')){ $('k6').textContent='R$'+comTotal.toLocaleString('pt-BR'); $('k6sub').textContent='R$'+comPago.toLocaleString('pt-BR')+' já pago'; }
-  if($('k7')){ $('k7').textContent='R$'+recLiq.toLocaleString('pt-BR'); $('k7sub').textContent='bruto − comissões − custo'; }
+  if($('k5')){ $('k5').textContent='R$'+recBruta.toLocaleString('pt-BR'); $('k5sub').textContent=leadsComEntrada.length+' entradas recebidas'; }
+  if($('k6')){ $('k6').textContent='R$'+(custoTotal+comTotal).toLocaleString('pt-BR'); $('k6sub').textContent='R$'+custoTotal.toLocaleString('pt-BR')+' custo + R$'+comTotal.toLocaleString('pt-BR')+' comissão'; }
+  if($('k7')){ $('k7').textContent='R$'+recLiq.toLocaleString('pt-BR'); $('k7sub').textContent='entradas − custo − comissões'; }
 
   // ── Comparativo ───────────────────────────────────
   function varPct(cur,prev){
@@ -1814,7 +1838,7 @@ function renderDash(){
     {l:'Ganhos',     cur:ganhosMes,  prev:ganhosAnt,  fmt:v=>v},
     {l:'Entradas',   cur:entMes,     prev:entAnt,     fmt:fmtR},
     {l:'Rec. Bruta', cur:recBruta,   prev:recBrutaAnt,fmt:fmtR},
-    {l:'Comissões',  cur:comTotal,   prev:comAnt,     fmt:fmtR},
+    {l:'Comissões',  cur:comTotal,   prev:comAnt,     fmt:v=>'-R$'+v.toLocaleString('pt-BR')},
     {l:'Custo Serv.',cur:custoTotal, prev:custoAnt,   fmt:v=>'-R$'+v.toLocaleString('pt-BR')},
     {l:'Rec. Líq.',  cur:recLiq,     prev:recLiqAnt,  fmt:fmtR},
   ];
