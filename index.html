@@ -1777,14 +1777,20 @@ function renderDash(){
   // valor_entrada + valor_restante = valor total do contrato
   // Se não tiver, tenta PVALS pelo nome do plano como fallback
   function getValorPlano(r){
-    const stored = (Number(r.valor_entrada)||0) + (Number(r.valor_restante)||0);
-    if(stored > 0) return stored;
-    return PVALS[r.plano] || 0;
+    // 1. Tenta PVALS (produto cadastrado com nome exato)
+    if(PVALS[r.plano]) return PVALS[r.plano];
+    // 2. Tenta entrada + restante salvos no lead
+    const ent = Number(r.valor_entrada)||0;
+    const rest = Number(r.valor_restante)||0;
+    if(ent + rest > 0) return ent + rest;
+    // 3. Se tem entrada mas não tem restante, usa só a entrada como mínimo
+    if(ent > 0) return ent;
+    return 0;
   }
   // Taxa de comissão: usa a do produto se existir, senão 10%
   function getTaxaComissao(r){
     const prod = produtos.find(p=>p.nome===r.plano);
-    return (prod?.comissao||10) / 100;
+    return (prod?.comissao||TAXA_COMISSAO*100) / 100;
   }
   const recAll = baseRecs.reduce((s,r)=>s+getValorPlano(r),0);
   const comTotal = baseRecs.filter(r=>r.estagio==='Ganho fechado').reduce((s,r)=>s+Math.round(getValorPlano(r)*getTaxaComissao(r)),0);
@@ -3293,9 +3299,12 @@ const TAXA_COMISSAO = 0.10; // 10%
 // Retorna o valor total do plano — prioriza valores reais do lead
 function planoVal(r){
   if(!r) return 0;
-  const stored = (Number(r.valor_entrada||0)) + (Number(r.valor_restante||0));
-  if(stored > 0) return stored;
-  return PVALS[r.plano] || 0;
+  if(PVALS[r.plano]) return PVALS[r.plano];
+  const ent = Number(r.valor_entrada)||0;
+  const rest = Number(r.valor_restante)||0;
+  if(ent + rest > 0) return ent + rest;
+  if(ent > 0) return ent;
+  return 0;
 }
 // Taxa de comissão do produto vinculado ao lead (ou padrão 10%)
 function comissaoRate(r){
