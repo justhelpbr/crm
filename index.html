@@ -1202,6 +1202,7 @@ CREATE POLICY "pub_c" ON colaboradores FOR ALL USING (true) WITH CHECK (true);</
     <div class="view" id="view-fontes">
       <div style="padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <span style="font-size:.74rem;color:var(--textdim)" id="fontesCount">0 fontes cadastradas</span>
+        <span style="font-size:.64rem;color:var(--textdim)" id="fontesDbStatus"></span>
         <button class="btn-new" id="btnNovaFonte" onclick="openNovaFonte()" style="margin-left:auto;display:none">
           <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nova Fonte
         </button>
@@ -1530,7 +1531,11 @@ async function sb(m,p,b=null){
   if(m==='POST')h['Prefer']='return=representation';
   if(m==='PATCH')h['Prefer']='return=minimal';
   const r=await fetch(SU+'/rest/v1/'+p,{method:m,headers:h,body:b?JSON.stringify(b):null});
-  if(!r.ok)throw new Error(await r.text());
+  if(!r.ok){
+    const errTxt=await r.text();
+    console.error('Supabase erro ['+m+' '+p+']:', errTxt);
+    throw new Error(errTxt);
+  }
   const t=await r.text();return t?JSON.parse(t):null;
 }
 
@@ -2685,7 +2690,7 @@ function goV(v,btn){
   if(v==='relatorios') renderRelatorios();
   if(v==='log') renderLog();
   if(v==='produtos'){ renderProdutos(); renderCatFilter(); }
-  if(v==='fontes') renderFontes();
+  if(v==='fontes'){ renderFontes(); testarTabelaFontes(); }
   if(v==='despesas'){ populateDespMes(); renderDespesas(); }
   if(v==='metasColab'){ populateMetaColabMes(); renderMetasColab(); }
   if(v==='reativacao') renderReativacao();
@@ -4139,29 +4144,67 @@ function getFonteIco(f){ return FONTE_ICONES[f?.icone||f?.emoji]||FONTE_ICONES.d
 async function loadFontes(){
   try{
     const data = await sb('GET','fontes?order=created_at.asc');
-    // Se retornou array (mesmo vazio) = tabela existe, respeita o que tem
     if(Array.isArray(data)){
-      fontes = data; // pode ser [] se o usuário apagou tudo — respeitamos isso
+      // Tabela existe — usa dados do banco (mesmo se vazio = usuário apagou)
+      fontes = data;
+      // Atualiza backup local com dados do banco
+      try{ localStorage.setItem('jh_fontes_bkp', JSON.stringify(fontes)); }catch(e){}
     } else {
-      // data é null = tabela não existe ainda, usa padrão
-      fontes = FONTES_PADRAO;
+      // Banco retornou null — tenta backup local, senão usa padrão
+      const bkp = localStorage.getItem('jh_fontes_bkp');
+      if(bkp){ try{ fontes = JSON.parse(bkp)||[]; }catch(e){ fontes = FONTES_PADRAO; } }
+      else fontes = FONTES_PADRAO;
     }
   }catch(e){
-    // Erro de conexão ou tabela não existe
-    const errMsg = (e.message||'').toLowerCase();
-    const tabelaNaoExiste = errMsg.includes('does not exist') || errMsg.includes('relation') || errMsg.includes('42p01');
-    if(tabelaNaoExiste || !fontes.length) fontes = FONTES_PADRAO;
-    // Se já tem fontes em memória (de sessão anterior), mantém
+    // Erro de rede ou tabela inexistente — tenta backup local
+    const bkp = localStorage.getItem('jh_fontes_bkp');
+    if(bkp){ try{ fontes = JSON.parse(bkp)||[]; }catch(ex){ fontes = FONTES_PADRAO; } }
+    else if(!fontes.length) fontes = FONTES_PADRAO;
+    console.warn('loadFontes fallback localStorage:', e.message);
   }
   syncFontesGlobais();
 }
 
 function syncFontesGlobais(){
-  // Atualiza FCLR e sfonte dinamicamente
-  fontes.filter(f=>f.ativo!==false).forEach(f=>{
-    FCLR[f.nome] = f.cor || '#555';
-  });
+  // Atualiza FCLR dinamicamente
+  fontes.filter(f=>f.ativo!==false).forEach(f=>{ FCLR[f.nome] = f.cor || '#555'; });
+  // Salva backup no localStorage sempre que sincronizar
+  try{ localStorage.setItem('jh_fontes_bkp', JSON.stringify(fontes)); }catch(e){}
 }
+
+async function testarTabelaFontes(){
+  const status = document.getElementById('fontesDbStatus');
+  try{
+    await sb('GET','fontes?limit=1');
+    if(status){ status.textContent='✅ Tabela OK'; status.style.color='var(--green2)'; }
+    return true;
+  }catch(e){
+    const msg=(e.message||'').toLowerCase();
+    if(msg.includes('does not exist')||msg.includes('relation')||msg.includes('42p01')){
+      if(status){
+        status.innerHTML='❌ Tabela não existe — <a href="https://supabase.com/dashboard" target="_blank" style="color:var(--red2);text-decoration:underline">Execute o SQL no Supabase</a>';
+        status.style.color='var(--red2)';
+      }
+      // Copia SQL para clipboard automaticamente
+      const sql = `CREATE TABLE IF NOT EXISTS fontes (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  nome text NOT NULL UNIQUE,
+  descricao text,
+  icone text DEFAULT 'default',
+  cor text DEFAULT '#3B82F6',
+  ativo boolean DEFAULT true,
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE fontes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "pub_f" ON fontes FOR ALL USING (true) WITH CHECK (true);`;
+      try{ await navigator.clipboard.writeText(sql); toast('SQL copiado! Cole no Supabase SQL Editor','inf'); }catch(e){}
+      return false;
+    }
+    if(status){ status.textContent='⚠️ '+e.message; status.style.color='var(--gold2)'; }
+    return false;
+  }
+}
+
 
 function renderFontes(){
   const grid = document.getElementById('fonteGrid'); if(!grid) return;
@@ -4279,37 +4322,57 @@ async function salvarFonte(){
   }
   const icone = document.getElementById('fnEmoji').value.trim() || fonteEmojiSel || 'default';
   const cor = document.getElementById('fnCor').value || fonteCorSel || '#3B82F6';
-  const data = {nome, descricao:document.getElementById('fnDesc').value.trim(), icone, cor, ativo:true};
+  const payload = {nome, descricao:document.getElementById('fnDesc').value.trim(), icone, cor, ativo:true};
   err.textContent='';
+
+  let salvouNoBanco = false;
 
   try{
     if(editFonteId){
-      await sb('PATCH','fontes?id=eq.'+editFonteId, data);
+      await sb('PATCH','fontes?id=eq.'+editFonteId, payload);
       const i = fontes.findIndex(f=>f.id===editFonteId);
-      if(i>-1) fontes[i]={...fontes[i],...data};
+      if(i>-1) fontes[i]={...fontes[i],...payload};
+      salvouNoBanco = true;
       toast('Fonte atualizada!','ok');
     } else {
-      const res = await sb('POST','fontes',{...data, created_at:new Date().toISOString()});
-      if(res&&res[0]) fontes.push(res[0]);
-      else { data.id='f'+Date.now(); data.created_at=new Date().toISOString(); fontes.push(data); }
+      const res = await sb('POST','fontes',{...payload, created_at:new Date().toISOString()});
+      if(res&&res[0]){
+        fontes.push(res[0]);
+      } else {
+        payload.id='f'+Date.now(); payload.created_at=new Date().toISOString();
+        fontes.push(payload);
+      }
+      salvouNoBanco = true;
       toast('Fonte criada!','ok');
     }
   }catch(e){
-    // fallback local
-    if(editFonteId){
-      const i=fontes.findIndex(f=>f.id===editFonteId); if(i>-1) fontes[i]={...fontes[i],...data};
+    // Salva em memória mesmo que o banco falhe
+    if(!editFonteId){
+      payload.id='f'+Date.now(); payload.created_at=new Date().toISOString();
+      fontes.push(payload);
     } else {
-      data.id='f'+Date.now(); data.created_at=new Date().toISOString(); fontes.push(data);
+      const i=fontes.findIndex(f=>f.id===editFonteId);
+      if(i>-1) fontes[i]={...fontes[i],...payload};
     }
-    toast('Salvo localmente (execute o SQL para persistir)','inf');
+    const msg = (e.message||e||'').toLowerCase();
+    if(msg.includes('does not exist')||msg.includes('relation')||msg.includes('42p01')){
+      // Tabela não existe — mostra SQL
+      toast('Tabela "fontes" não existe no Supabase. Execute o SQL no painel!','err');
+      const sql = `CREATE TABLE IF NOT EXISTS fontes (\n  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,\n  nome text NOT NULL UNIQUE,\n  descricao text,\n  icone text DEFAULT 'default',\n  cor text DEFAULT '#3B82F6',\n  ativo boolean DEFAULT true,\n  created_at timestamptz DEFAULT now()\n);\nALTER TABLE fontes ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "pub_f" ON fontes FOR ALL USING (true) WITH CHECK (true);`;
+      err.innerHTML = '⚠️ Execute este SQL no Supabase:<br><pre style="font-size:.6rem;background:var(--bg4);padding:8px;border-radius:4px;margin-top:4px;overflow-x:auto;white-space:pre-wrap">'+sql+'</pre>';
+    } else {
+      toast('Erro ao salvar no banco: '+e.message,'err');
+      console.error('Erro salvarFonte:', e);
+    }
   }
 
   syncFontesGlobais();
   closeFonte();
   renderFontes();
   syncSelFontes();
-  addHist('nota',(editFonteId?'Fonte editada: ':'Fonte criada: ')+'<strong>'+nome+'</strong>');
+  if(salvouNoBanco) addHist('nota',(editFonteId?'Fonte editada: ':'Fonte criada: ')+'<strong>'+nome+'</strong>');
 }
+
 
 async function deleteFonte(id){
   if(!isAdmin()){ toast('Apenas administradores podem remover fontes','err'); return; }
