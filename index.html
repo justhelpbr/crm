@@ -1773,9 +1773,22 @@ function renderDash(){
   const ativos = baseRecs.filter(r=>!['Ganho fechado','Cancelado','Congelado'].includes(r.estagio)).length;
   const entMes = recsMes.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
   const entAll = baseRecs.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
-  const recAll = baseRecs.reduce((s,r)=>s+(PVALS[r.plano]||0),0);
-  const comTotal = baseRecs.filter(r=>r.estagio==='Ganho fechado').reduce((s,r)=>s+Math.round((PVALS[r.plano]||0)*TAXA_COMISSAO),0);
-  const comPago  = baseRecs.filter(r=>r.estagio==='Ganho fechado'&&r.comissao_status==='pago').reduce((s,r)=>s+Math.round((PVALS[r.plano]||0)*TAXA_COMISSAO),0);
+  // Receita: sempre usa os valores reais armazenados no lead
+  // valor_entrada + valor_restante = valor total do contrato
+  // Se não tiver, tenta PVALS pelo nome do plano como fallback
+  function getValorPlano(r){
+    const stored = (Number(r.valor_entrada)||0) + (Number(r.valor_restante)||0);
+    if(stored > 0) return stored;
+    return PVALS[r.plano] || 0;
+  }
+  // Taxa de comissão: usa a do produto se existir, senão 10%
+  function getTaxaComissao(r){
+    const prod = produtos.find(p=>p.nome===r.plano);
+    return (prod?.comissao||10) / 100;
+  }
+  const recAll = baseRecs.reduce((s,r)=>s+getValorPlano(r),0);
+  const comTotal = baseRecs.filter(r=>r.estagio==='Ganho fechado').reduce((s,r)=>s+Math.round(getValorPlano(r)*getTaxaComissao(r)),0);
+  const comPago  = baseRecs.filter(r=>r.estagio==='Ganho fechado'&&r.comissao_status==='pago').reduce((s,r)=>s+Math.round(getValorPlano(r)*getTaxaComissao(r)),0);
   const recLiq   = recAll - comTotal;
 
   // KPIs mês anterior (comparativo)
@@ -1801,7 +1814,10 @@ function renderDash(){
     {l:'Leads',cur:totalMes,prev:totalAnt,fmt:v=>v},
     {l:'Ganhos',cur:ganhosMes,prev:ganhosAntN,fmt:v=>v},
     {l:'Entradas',cur:entMes,prev:entAnt,fmt:v=>'R$'+v.toLocaleString('pt-BR')},
-    {l:'Rec. Líquida',cur:entMes-Math.round(recsMes.filter(r=>r.estagio==='Ganho fechado').reduce((s,r)=>s+(PVALS[r.plano]||0)*TAXA_COMISSAO,0)),prev:entAnt-Math.round(recsAnt.filter(r=>r.estagio==='Ganho fechado').reduce((s,r)=>s+(PVALS[r.plano]||0)*TAXA_COMISSAO,0)),fmt:v=>'R$'+Math.max(0,v).toLocaleString('pt-BR')},
+    {l:'Rec. Líquida',
+      cur:entMes-Math.round(recsMes.filter(r=>r.estagio==='Ganho fechado').reduce((s,r)=>s+planoVal(r)*comissaoRate(r),0)),
+      prev:entAnt-Math.round(recsAnt.filter(r=>r.estagio==='Ganho fechado').reduce((s,r)=>s+planoVal(r)*comissaoRate(r),0)),
+      fmt:v=>'R$'+Math.max(0,v).toLocaleString('pt-BR')},
   ];
   if(el('comparativo')) el('comparativo').innerHTML=compItems.map(item=>`
     <div style="background:var(--bg3);border-radius:var(--rs);padding:10px;text-align:center">
@@ -1924,7 +1940,7 @@ function renderKb(){
   const cols=NESTAGES;
   board.innerHTML=cols.map(col=>{
     const cr=recs.filter(r=>r.estagio===col);
-    const tv=cr.reduce((s,r)=>s+(PVALS[r.plano]||0),0);
+    const tv=cr.reduce((s,r)=>s+planoVal(r),0);
     const color=ECLR[col]||'#555';
     return '<div class="kb-col" ondragover="kbOver(event)" ondrop="kbDrop(event,\''+col+'\')" ondragleave="kbLeave(event)">'
       +'<div class="kb-head"><div class="kb-ttl"><div class="kb-dot" style="background:'+color+'"></div>'+col+'</div>'
@@ -1934,7 +1950,7 @@ function renderKb(){
       +cr.map(r=>'<div class="kc" draggable="true" data-id="'+r.id+'" ondragstart="kbStart(event,\''+r.id+'\')" ondragend="kbEnd(event)" onclick="openDet(\''+r.id+'\')">'
         +'<div class="kc-top"><div class="kc-name">'+r.nome+'</div><span class="kc-src '+fClass(r.fonte)+'">'+sfonte(r.fonte)+'</span></div>'
         +'<div class="kc-phone">'+fp(r.telefone||r.whatsapp)+'</div>'
-        +'<div class="kc-foot"><div class="kc-val">'+(r.plano?'R$'+(PVALS[r.plano]||0).toLocaleString('pt-BR'):'')+'</div>'
+        +'<div class="kc-foot"><div class="kc-val">'+(r.plano?'R$'+planoVal(r).toLocaleString('pt-BR'):'')+'</div>'
         +'<div style="display:flex;align-items:center;gap:4px"><span style="font-size:.6rem;color:var(--textdim)">'+fd(r.created_at)+'</span><div class="kc-av">'+(r.responsavel||'?').split(' ').map(w=>w[0]).slice(0,2).join('')+'</div></div>'
         +'</div></div>').join('')
       +'</div></div>';
@@ -2103,7 +2119,7 @@ function renderDrTab(r,tab){
       ['Restante',r.valor_restante?'R$ '+Number(r.valor_restante).toLocaleString('pt-BR'):'R$ 0','var(--red2)'],
       ['Cadastrado por',r.cadastrado_por||'JustHelp','var(--teal)'],
       ['Nº Processo',r.numero_processo||'—'],
-      ['Comissão',r.estagio==='Ganho fechado'&&PVALS[r.plano]?'R$ '+Math.round((PVALS[r.plano]||0)*0.1).toLocaleString('pt-BR')+' — '+(r.comissao_status==='pago'?'✅ Paga':'⏳ Pendente'):'—',r.comissao_status==='pago'?'var(--green2)':'var(--gold2)'],
+      ['Comissão',r.estagio==='Ganho fechado'&&planoVal(r)>0?'R$ '+Math.round(planoVal(r)*0.1).toLocaleString('pt-BR')+' — '+(r.comissao_status==='pago'?'✅ Paga':'⏳ Pendente'):'—',r.comissao_status==='pago'?'var(--green2)':'var(--gold2)'],
       ['Data Processo',r.data_processo?new Date(r.data_processo+'T12:00:00').toLocaleDateString('pt-BR'):'—'],
       ['Próx. Contato',r.proximo_contato?new Date(r.proximo_contato+'T12:00:00').toLocaleDateString('pt-BR'):'—'],
       ['Criado em',fd(r.created_at)],
@@ -2394,7 +2410,7 @@ function gerarContratoManual(){
 
 function gerarTextoContrato(r){
   const hoje = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
-  const pv = PVALS[r.plano]||0;
+  const pv = planoVal(r);
   const ent = Number(r.valor_entrada)||0;
   const rest = Number(r.valor_restante)||0;
   const vExt = {'A Vista R$900':'Novecentos reais','Standard R$500+R$500':'Um mil reais','Plus R$250+R$1050':'Um mil e trezentos reais','PIX Parcelado 2x R$450':'Novecentos reais (2 parcelas de R$ 450,00)','PIX Parcelado 3x R$300':'Novecentos reais (3 parcelas de R$ 300,00)','PIX Parcelado 4x R$250':'Um mil reais (4 parcelas de R$ 250,00)','PIX Parcelado 5x R$200':'Um mil reais (5 parcelas de R$ 200,00)','PIX Parcelado 6x R$167':'Um mil reais (6 parcelas de R$ 167,00)','PIX Parcelado 10x R$100':'Um mil reais (10 parcelas de R$ 100,00)','PIX Parcelado 12x R$83':'Novecentos e noventa e seis reais (12 parcelas de R$ 83,00)',900:'Novecentos reais',1000:'Um mil reais',1300:'Um mil e trezentos reais',500:'Quinhentos reais',250:'Duzentos e cinquenta reais',1050:'Um mil e cinquenta reais'};
@@ -3162,7 +3178,7 @@ function renderRelatorios(){
     mm[m].leads++;
     mm[m].entradas+=Number(r.valor_entrada)||0;
     if(r.estagio==='Ganho fechado') mm[m].ganhos++;
-    mm[m].projetado+=PVALS[r.plano]||0;
+    mm[m].projetado+=planoVal(r);
   });
   el4.innerHTML='<div style="display:grid;grid-template-columns:auto 1fr 1fr 1fr 1fr;gap:6px 12px;align-items:center;font-size:.7rem">'
     +'<div></div><div style="color:var(--textdim);font-weight:700">Mês</div><div style="color:var(--textdim);font-weight:700;text-align:center">Leads</div><div style="color:var(--textdim);font-weight:700;text-align:center">Ganhos</div><div style="color:var(--textdim);font-weight:700;text-align:right">Entradas</div>'
@@ -3274,6 +3290,19 @@ function exportFinMesPDF(){
 // ═══ COMISSÕES ═══
 const TAXA_COMISSAO = 0.10; // 10%
 
+// Retorna o valor total do plano — prioriza valores reais do lead
+function planoVal(r){
+  if(!r) return 0;
+  const stored = (Number(r.valor_entrada||0)) + (Number(r.valor_restante||0));
+  if(stored > 0) return stored;
+  return PVALS[r.plano] || 0;
+}
+// Taxa de comissão do produto vinculado ao lead (ou padrão 10%)
+function comissaoRate(r){
+  const prod = produtos.find(p=>p.nome===r?.plano);
+  return (prod?.comissao||10) / 100;
+}
+
 function populateComMes(){
   const sel=document.getElementById('comMes'); if(!sel) return;
   const meses=new Set();
@@ -3319,8 +3348,8 @@ async function renderComissoes(){
     // Só processa leads ganhos com responsável e valor definido
     if(r.estagio!=='Ganho fechado') return;
     const resp=r.responsavel||'JustHelp';
-    const pv=PVALS[r.plano]||0; if(!pv) return;
-    const comissao=Math.round(pv*TAXA_COMISSAO*100)/100;
+    const pv=planoVal(r); if(!pv) return;
+    const comissao=Math.round(pv*(comissaoRate(r)||TAXA_COMISSAO)*100)/100;
     const mes=mesBR(r.created_at);
     if(mesFil&&mes!==mesFil) return;
 
@@ -3420,8 +3449,8 @@ function exportComissoesPDF(){
   const mes=document.getElementById('comMes')?.value||'';
   function getMesBR(ds){if(!ds)return'';try{return new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit'}).format(new Date(ds));}catch(e){return''}}
   const rows=['<table><tr><th>Colaborador</th><th>Cliente</th><th>Plano</th><th>Valor Total</th><th>Comissão (10%)</th><th>Status</th><th>Data</th><\/tr>'];
-  recs.filter(r=>r.estagio==='Ganho fechado'&&PVALS[r.plano]).filter(r=>!mes||(mesBR(r.created_at)===mes)).sort((a,b)=>(a.responsavel||'').localeCompare(b.responsavel||'')).forEach(r=>{
-    const pv=PVALS[r.plano]||0;
+  recs.filter(r=>r.estagio==='Ganho fechado'&&planoVal(r)>0).filter(r=>!mes||(mesBR(r.created_at)===mes)).sort((a,b)=>(a.responsavel||'').localeCompare(b.responsavel||'')).forEach(r=>{
+    const pv=planoVal(r);
     rows.push('<tr><td>'+(r.responsavel||'JustHelp')+'<\/td><td>'+r.nome+'<\/td><td>'+r.plano+'<\/td><td>R$ '+pv.toLocaleString('pt-BR')+'<\/td><td>R$ '+Math.round(pv*0.1).toLocaleString('pt-BR')+'<\/td><td>'+(r.comissao_status==='pago'?'Pago':'Pendente')+'<\/td><td>'+fd(r.created_at)+'<\/td><\/tr>');
   });
   rows.push('<\/table>');
@@ -3810,7 +3839,7 @@ function renderDespesas(){
   const lista = despesas.filter(d=>mesBR(d.data+'T12:00:00')===mes).sort((a,b)=>new Date(b.data)-new Date(a.data));
   const total = lista.reduce((s,d)=>s+Number(d.valor),0);
   const recBruta = recs.filter(r=>mesBR(r.created_at)===mes).reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
-  const comMes = recs.filter(r=>mesBR(r.created_at)===mes&&r.estagio==='Ganho fechado').reduce((s,r)=>s+Math.round((PVALS[r.plano]||0)*TAXA_COMISSAO),0);
+  const comMes = recs.filter(r=>mesBR(r.created_at)===mes&&r.estagio==='Ganho fechado').reduce((s,r)=>s+Math.round(planoVal(r)*comissaoRate(r)),0);
   const recLiq = recBruta - comMes - total;
   const d=document.getElementById('despTotal'); if(d) d.textContent='R$ '+total.toLocaleString('pt-BR');
   const b=document.getElementById('despRecBruta'); if(b) b.textContent='R$ '+recBruta.toLocaleString('pt-BR');
