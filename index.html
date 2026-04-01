@@ -1703,73 +1703,72 @@ function renderAll(){
 // ═══ DASHBOARD ═══
 function renderDash(){
   const now = new Date();
-  // Usa horário de Brasília (UTC-3) para não errar o mês
-  const mesCur = mesAtualBR(); // "2026-03"
+  const elById = id => document.getElementById(id); // evita conflito com variável 'el' abaixo
 
-  // Calcula mês anterior corretamente
-  const [yCur, mCur] = mesCur.split('-').map(Number);
-  const mesAntDate = new Date(yCur, mCur - 2, 15, 12, 0, 0); // dia 15 ao meio-dia = seguro contra timezone
-  const mesAnt = mesBR(mesAntDate);
+  const mesCur = mesAtualBR(); // mês real de hoje em BRT
 
-  // Popula select de meses disponíveis
-  const selMes = document.getElementById('dashMesSel');
+  // Popula select de meses disponíveis com todos os meses que têm leads
+  const selMes = elById('dashMesSel');
   if(selMes){
     const mesesDisp = new Set([mesCur]);
-    recs.forEach(r=>{ if(r.created_at) mesesDisp.add(mesBR(r.created_at)); });
-    // Só repopula se estiver vazio
-    if(!selMes.options.length){
-      selMes.innerHTML = [...mesesDisp].sort((a,b)=>b.localeCompare(a)).map(m=>
-        '<option value="'+m+'"'+(m===mesCur?' selected':'')+'>'+nomeMesBR(m)+'</option>'
-      ).join('');
+    recs.forEach(r=>{ if(r.created_at){ const m=mesBR(r.created_at); if(m) mesesDisp.add(m); }});
+
+    // Determina qual mês selecionar por padrão:
+    // Se há leads no mês atual → atual; senão → mês mais recente com dados
+    const sorted = [...mesesDisp].sort((a,b)=>b.localeCompare(a));
+    const defaultMes = sorted.find(m=>recs.some(r=>mesBR(r.created_at)===m)) || mesCur;
+    const prevVal = selMes.value;
+
+    // Repopula sempre para garantir que todos os meses aparecem
+    selMes.innerHTML = sorted.map(m=>
+      '<option value="'+m+'">'+nomeMesBR(m)+'</option>'
+    ).join('');
+
+    // Mantém seleção anterior se válida, senão usa padrão
+    if(prevVal && sorted.includes(prevVal)){
+      selMes.value = prevVal;
     } else {
-      // Garante que todos os meses estão no select
-      [...mesesDisp].forEach(m=>{
-        if(![...selMes.options].find(o=>o.value===m)){
-          const o=document.createElement('option');
-          o.value=m; o.textContent=nomeMesBR(m);
-          selMes.appendChild(o);
-        }
-      });
+      selMes.value = defaultMes;
     }
   }
 
-  // Mês selecionado no select (padrão = atual)
-  const _mes = document.getElementById('dashMesSel')?.value || mesCur;
-  // Mês anterior ao selecionado
+  // Mês selecionado
+  const _mes = elById('dashMesSel')?.value || mesCur;
+  // Mês anterior ao selecionado (dia 15, 12h = seguro contra timezone)
   const [_y, _m] = _mes.split('-').map(Number);
   const _mesAntDate = new Date(_y, _m - 2, 15, 12, 0, 0);
   const _mesAnt = mesBR(_mesAntDate);
 
-  // Filtra leads pelo mês selecionado e pelo anterior
-  const recsMes = recs.filter(r => mesBR(r.created_at) === _mes);
-  const recsAnt = recs.filter(r => mesBR(r.created_at) === _mesAnt);
+  // Filtra leads pelo mês selecionado usando getRecsVisiveis (respeita filtro por colaborador)
+  const baseRecs = getRecsVisiveis();
+  const recsMes = baseRecs.filter(r => mesBR(r.created_at) === _mes);
+  const recsAnt = baseRecs.filter(r => mesBR(r.created_at) === _mesAnt);
   const nomeMes = nomeMesBR(_mes);
   const nomeAnt = nomeMesBR(_mesAnt);
 
-  if(el('dashMesLabel')) el('dashMesLabel').textContent = '📅 ' + nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
+  if(elById('dashMesLabel')) elById('dashMesLabel').textContent = '📅 ' + nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
+  if(elById('dashLastUpdate')) elById('dashLastUpdate').textContent = 'Atualizado: '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 
-  // KPIs mês atual
+  // KPIs mês selecionado
   const totalMes = recsMes.length;
-  const totalAll = recs.length;
+  const totalAll = baseRecs.length;
   const ganhosMes = recsMes.filter(r=>r.estagio==='Ganho fechado').length;
-  const ganhosAll = recs.filter(r=>r.estagio==='Ganho fechado').length;
-  const ativos = recs.filter(r=>!['Ganho fechado','Cancelado','Congelado'].includes(r.estagio)).length;
+  const ganhosAll = baseRecs.filter(r=>r.estagio==='Ganho fechado').length;
+  const ativos = baseRecs.filter(r=>!['Ganho fechado','Cancelado','Congelado'].includes(r.estagio)).length;
   const entMes = recsMes.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
-  const entAll = recs.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
-  const recAll = recs.reduce((s,r)=>s+(PVALS[r.plano]||0),0);
-  // Comissões — 10% dos processos ganhos
-  const comTotal = recs.filter(r=>r.estagio==='Ganho fechado').reduce((s,r)=>s+Math.round((PVALS[r.plano]||0)*TAXA_COMISSAO),0);
-  const comPago  = recs.filter(r=>r.estagio==='Ganho fechado'&&r.comissao_status==='pago').reduce((s,r)=>s+Math.round((PVALS[r.plano]||0)*TAXA_COMISSAO),0);
+  const entAll = baseRecs.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
+  const recAll = baseRecs.reduce((s,r)=>s+(PVALS[r.plano]||0),0);
+  const comTotal = baseRecs.filter(r=>r.estagio==='Ganho fechado').reduce((s,r)=>s+Math.round((PVALS[r.plano]||0)*TAXA_COMISSAO),0);
+  const comPago  = baseRecs.filter(r=>r.estagio==='Ganho fechado'&&r.comissao_status==='pago').reduce((s,r)=>s+Math.round((PVALS[r.plano]||0)*TAXA_COMISSAO),0);
   const recLiq   = recAll - comTotal;
 
-  // KPIs mês anterior (para comparativo)
+  // KPIs mês anterior (comparativo)
   const totalAnt = recsAnt.length;
   const ganhosAntN = recsAnt.filter(r=>r.estagio==='Ganho fechado').length;
   const entAnt = recsAnt.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
 
-  // Atualiza KPIs
+  // Atualiza KPIs na tela
   const el = id => document.getElementById(id);
-  if(el('dashLastUpdate')) el('dashLastUpdate').textContent = 'Atualizado: '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   if(el('k1')){ el('k1').textContent=totalMes; el('k1sub').textContent=totalAll+' total'; }
   if(el('k2')){ el('k2').textContent=ativos; el('k2sub').textContent='em andamento'; }
   if(el('k3')){ el('k3').textContent=ganhosMes; el('k3sub').textContent=ganhosAll+' total'; }
