@@ -444,6 +444,21 @@ tr:hover .td-acts{opacity:1}
 .reat-dias small{font-size:.5rem;display:block;color:#A78BFA}
 .reat-motivo{font-size:.6rem;padding:2px 7px;border-radius:20px;background:rgba(192,57,43,.12);color:#FC8181;margin-top:2px;display:inline-block}
 
+
+/* FONTES */
+.fonte-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;padding:14px}
+.fonte-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;position:relative;transition:.2s;cursor:default}
+.fonte-card:hover{border-color:var(--border2)}
+.fonte-cor{width:36px;height:36px;border-radius:50%;margin-bottom:10px;display:flex;align-items:center;justify-content:center;font-size:1rem}
+.fonte-nome{font-size:.88rem;font-weight:700;margin-bottom:3px}
+.fonte-desc{font-size:.68rem;color:var(--textdim);line-height:1.5}
+.fonte-acts{position:absolute;top:10px;right:10px;display:flex;gap:4px;opacity:0;transition:.15s}
+.fonte-card:hover .fonte-acts{opacity:1}
+.fonte-stats{display:flex;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.fonte-stat{text-align:center;flex:1}
+.fonte-stat-val{font-family:"Montserrat",sans-serif;font-size:.9rem;font-weight:900}
+.fonte-stat-lbl{font-size:.56rem;color:var(--textdim);text-transform:uppercase;letter-spacing:.5px}
+
 </style>
 </head>
 <body>
@@ -532,6 +547,9 @@ tr:hover .td-acts{opacity:1}
     <div class="sb-sec">Sistema</div>
     <button class="sb-btn" onclick="goV('produtos',this)">
       <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Produtos
+    </button>
+    <button class="sb-btn" onclick="goV('fontes',this)">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Fontes de Lead
     </button>
     <button class="sb-btn" onclick="goV('log',this)">
       <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Log de Acesso
@@ -979,6 +997,18 @@ CREATE TABLE IF NOT EXISTS produtos (
 );
 ALTER TABLE produtos ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "pub_p" ON produtos FOR ALL USING (true) WITH CHECK (true);
+
+CREATE TABLE IF NOT EXISTS fontes (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  nome text NOT NULL UNIQUE,
+  descricao text,
+  icone text DEFAULT 'default',
+  cor text DEFAULT '#3B82F6',
+  ativo boolean DEFAULT true,
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE fontes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "pub_f" ON fontes FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "pub" ON leads FOR ALL USING (true) WITH CHECK (true);
 
 CREATE TABLE IF NOT EXISTS colaboradores (
@@ -1167,6 +1197,18 @@ CREATE POLICY "pub_c" ON colaboradores FOR ALL USING (true) WITH CHECK (true);</
       <div style="flex:1;overflow-y:auto;padding:14px" id="reatGrid"></div>
     </div>
 
+
+    <!-- FONTES DE LEAD -->
+    <div class="view" id="view-fontes">
+      <div style="padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:.74rem;color:var(--textdim)" id="fontesCount">0 fontes cadastradas</span>
+        <button class="btn-new" id="btnNovaFonte" onclick="openNovaFonte()" style="margin-left:auto;display:none">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nova Fonte
+        </button>
+      </div>
+      <div class="fonte-grid" id="fonteGrid"></div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
 </div><!-- /app -->
@@ -1332,6 +1374,57 @@ CREATE POLICY "pub_c" ON colaboradores FOR ALL USING (true) WITH CHECK (true);</
     <div class="dr-foot">
       <button class="btn-cancel" onclick="document.getElementById('modalMeta').classList.remove('open')">Cancelar</button>
       <button class="btn-save" onclick="salvarMetasColab()">Salvar Metas</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL FONTE -->
+<div class="overlay" id="modalFonte">
+  <div class="drawer" style="max-width:400px">
+    <div class="dr-head">
+      <div class="dr-ttl" id="fonteModalTtl">Nova Fonte de Lead</div>
+      <button class="dr-close" onclick="closeFonte()">✕</button>
+    </div>
+    <div class="dr-body">
+      <div class="fg"><label>Nome da Fonte *</label><input id="fnNome" placeholder="Ex: TikTok Ads, Parceiro X, Evento"></div>
+      <div class="fg"><label>Descrição</label><input id="fnDesc" placeholder="Ex: Anúncios no TikTok para público 25-45 anos"></div>
+      <div class="fg"><label>Ícone</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="iconePicker">
+          <button type="button" class="icone-opt" data-icone="whatsapp" onclick="selIcone(this,'whatsapp')" title="WhatsApp" style="width:34px;height:34px;border-radius:var(--rs);background:var(--bg3);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--textmid);transition:.15s"><svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>
+          <button type="button" class="icone-opt" data-icone="instagram" onclick="selIcone(this,'instagram')" title="Instagram" style="width:34px;height:34px;border-radius:var(--rs);background:var(--bg3);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--textmid);transition:.15s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></button>
+          <button type="button" class="icone-opt" data-icone="ads" onclick="selIcone(this,'ads')" title="Anúncios" style="width:34px;height:34px;border-radius:var(--rs);background:var(--bg3);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--textmid);transition:.15s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg></button>
+          <button type="button" class="icone-opt" data-icone="target" onclick="selIcone(this,'target')" title="Campanha" style="width:34px;height:34px;border-radius:var(--rs);background:var(--bg3);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--textmid);transition:.15s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></button>
+          <button type="button" class="icone-opt" data-icone="handshake" onclick="selIcone(this,'handshake')" title="Indicação" style="width:34px;height:34px;border-radius:var(--rs);background:var(--bg3);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--textmid);transition:.15s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+          <button type="button" class="icone-opt" data-icone="globe" onclick="selIcone(this,'globe')" title="Google/Web" style="width:34px;height:34px;border-radius:var(--rs);background:var(--bg3);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--textmid);transition:.15s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></button>
+          <button type="button" class="icone-opt" data-icone="sdr" onclick="selIcone(this,'sdr')" title="SDR/Telefone" style="width:34px;height:34px;border-radius:var(--rs);background:var(--bg3);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--textmid);transition:.15s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.42 2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.13 6.13l1.06-1.06a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></button>
+          <button type="button" class="icone-opt" data-icone="chat" onclick="selIcone(this,'chat')" title="Chat/Mensagem" style="width:34px;height:34px;border-radius:var(--rs);background:var(--bg3);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--textmid);transition:.15s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+          <button type="button" class="icone-opt" data-icone="people" onclick="selIcone(this,'people')" title="Pessoas" style="width:34px;height:34px;border-radius:var(--rs);background:var(--bg3);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--textmid);transition:.15s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
+          <button type="button" class="icone-opt" data-icone="star" onclick="selIcone(this,'star')" title="Destaque" style="width:34px;height:34px;border-radius:var(--rs);background:var(--bg3);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--textmid);transition:.15s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+          <button type="button" class="icone-opt" data-icone="tiktok" onclick="selIcone(this,'tiktok')" title="TikTok" style="width:34px;height:34px;border-radius:var(--rs);background:var(--bg3);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--textmid);transition:.15s"><svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg></button>
+          <button type="button" class="icone-opt" data-icone="chart" onclick="selIcone(this,'chart')" title="Relatório" style="width:34px;height:34px;border-radius:var(--rs);background:var(--bg3);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--textmid);transition:.15s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></button>
+        </div>
+        <input id="fnEmoji" type="hidden" value="whatsapp">
+      </div>
+      <div class="fg"><label>Cor</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px" id="corPicker">
+          <div style="width:24px;height:24px;border-radius:50%;background:#3B82F6;cursor:pointer;border:2px solid transparent;transition:.15s" onclick="selCor(this,'#3B82F6')"></div>
+          <div style="width:24px;height:24px;border-radius:50%;background:#EC4899;cursor:pointer;border:2px solid transparent;transition:.15s" onclick="selCor(this,'#EC4899')"></div>
+          <div style="width:24px;height:24px;border-radius:50%;background:#27AE60;cursor:pointer;border:2px solid transparent;transition:.15s" onclick="selCor(this,'#27AE60')"></div>
+          <div style="width:24px;height:24px;border-radius:50%;background:#D4AF37;cursor:pointer;border:2px solid transparent;transition:.15s" onclick="selCor(this,'#D4AF37')"></div>
+          <div style="width:24px;height:24px;border-radius:50%;background:#8B5CF6;cursor:pointer;border:2px solid transparent;transition:.15s" onclick="selCor(this,'#8B5CF6')"></div>
+          <div style="width:24px;height:24px;border-radius:50%;background:#00B4A2;cursor:pointer;border:2px solid transparent;transition:.15s" onclick="selCor(this,'#00B4A2')"></div>
+          <div style="width:24px;height:24px;border-radius:50%;background:#E67E22;cursor:pointer;border:2px solid transparent;transition:.15s" onclick="selCor(this,'#E67E22')"></div>
+          <div style="width:24px;height:24px;border-radius:50%;background:#FC8181;cursor:pointer;border:2px solid transparent;transition:.15s" onclick="selCor(this,'#FC8181')"></div>
+          <div style="width:24px;height:24px;border-radius:50%;background:#A78BFA;cursor:pointer;border:2px solid transparent;transition:.15s" onclick="selCor(this,'#A78BFA')"></div>
+          <input id="fnCor" type="color" value="#3B82F6" style="width:24px;height:24px;border-radius:50%;border:none;padding:0;cursor:pointer;background:none" title="Cor personalizada">
+        </div>
+      </div>
+      <div style="font-size:.7rem;color:#FC8181;margin-top:4px" id="fonteErr"></div>
+    </div>
+    <div class="dr-foot">
+      <button class="btn-cancel" onclick="closeFonte()">Cancelar</button>
+      <button class="btn-save" onclick="salvarFonte()">Salvar Fonte</button>
     </div>
   </div>
 </div>
@@ -1561,6 +1654,7 @@ function onLogin(user){
   addAccessLog('login','Login realizado');
   loadResps();
   loadProdutos();
+  loadFontes();
   loadDespesas();
   loadData();
 }
@@ -1871,9 +1965,7 @@ function formHtml(r){
   +['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(a=>'<option'+(a===r.uf?' selected':'')+'>'+a+'</option>').join('')
   +'</select></div></div>'
   +'<div class="fg-sec">⚖️ Processo</div>'
-  +'<div class="fg-2"><div class="fg"><label>Fonte</label><select id="fFt"><option value="">Selecione...</option>'
-  +['Meta ADS Whatsapp','Instagram','SDR WhatsApp','Meta Ads','Campanha Ademir','Indicação','Google Ads'].map(a=>'<option'+(a===r.fonte?' selected':'')+'>'+a+'</option>').join('')
-  +'</select></div><div class="fg"><label>Negativado em</label><select id="fEl"><option value="">Selecione...</option>'
+  +'<div class="fg-2"><div class="fg"><label>Fonte</label><select id="fFt"><option value="">Selecione...</option>'  +fontes.filter(f=>f.ativo!==false).map(f=>'<option value="'+f.nome+'"'+(f.nome===r.fonte?' selected':'')+'>'+f.nome+'</option>').join('')  +'</select></div><div class="fg"><label>Negativado em</label><select id="fEl"><option value="">Selecione...</option>'
   +['Serasa','SCPC','Serasa e SCPC','Boa Vista','Serasa, SCPC e Boa Vista'].map(a=>'<option'+(a===r.elegibilidade?' selected':'')+'>'+a+'</option>').join('')
   +'</select></div></div>'
   +'<div class="fg-2"><div class="fg"><label>Credor</label><input id="fCred" value="'+(r.credor||'')+'" placeholder="Ex: Banco Itaú"></div>'
@@ -2438,9 +2530,10 @@ function renderCSdocs(){
 
 // ═══ COLABORADORES ═══
 function isAdmin(){
-  if(!currentUser) return false;
-  if(currentUser.email==='justhelpbr@gmail.com') return true;
-  const r=(currentUser.role||'').toLowerCase();
+  const u = currentUser || (() => { try{ return JSON.parse(localStorage.getItem('jh_sess')||'{}'); }catch(e){ return {}; } })();
+  if(!u) return false;
+  if(u.email==='justhelpbr@gmail.com') return true;
+  const r=(u.role||'').toLowerCase();
   return r==='administrador'||r==='admin';
 }
 
@@ -2495,7 +2588,7 @@ async function delColab(id,email){
 }
 
 // ═══ NAV ═══
-const TITLES={dashboard:'Página Inicial',leads:'Clientes Potenciais',negocios:'Negócios',kanban:'Kanban',agenda:'Agenda',parados:'Leads Parados',meta:'Meta e Receita',funil:'Funil de Conversão',mapa:'Mapa de Leads',historico:'Histórico',contrato:'Contrato Digital',clicksign:'Clicksign',recebiveis:'Recebíveis',inadimplencia:'Inadimplência',comissoes:'Comissões',produtos:'Produtos',despesas:'Despesas',metasColab:'Metas da Equipe',reativacao:'Funil de Reativação',relatorios:'Relatórios',log:'Log de Acesso',colaboradores:'Colaboradores',config:'Configurações'};
+const TITLES={dashboard:'Página Inicial',leads:'Clientes Potenciais',negocios:'Negócios',kanban:'Kanban',agenda:'Agenda',parados:'Leads Parados',meta:'Meta e Receita',funil:'Funil de Conversão',mapa:'Mapa de Leads',historico:'Histórico',contrato:'Contrato Digital',clicksign:'Clicksign',recebiveis:'Recebíveis',inadimplencia:'Inadimplência',comissoes:'Comissões',produtos:'Produtos',fontes:'Fontes de Lead',despesas:'Despesas',metasColab:'Metas da Equipe',reativacao:'Funil de Reativação',relatorios:'Relatórios',log:'Log de Acesso',colaboradores:'Colaboradores',config:'Configurações'};
 
 function goV(v,btn){
   curV=v;curSub='todos';
@@ -2548,6 +2641,7 @@ function goV(v,btn){
   if(v==='relatorios') renderRelatorios();
   if(v==='log') renderLog();
   if(v==='produtos'){ renderProdutos(); renderCatFilter(); }
+  if(v==='fontes') renderFontes();
   if(v==='despesas'){ populateDespMes(); renderDespesas(); }
   if(v==='metasColab'){ populateMetaColabMes(); renderMetasColab(); }
   if(v==='reativacao') renderReativacao();
@@ -3929,6 +4023,244 @@ function renderReativacao(){
         </div>
       </div>`;
     }).join('');
+}
+
+
+
+// ═══════════════════════════════════════════════════
+// 📣 FONTES DE LEAD — sistema dinâmico
+// ═══════════════════════════════════════════════════
+let fontes = [];
+let editFonteId = null;
+let fonteEmojiSel = '📱';
+let fonteCorSel = '#3B82F6';
+
+const FONTES_PADRAO = [
+  {id:'f1',nome:'Meta ADS Whatsapp',descricao:'Anúncios no Meta direcionados ao WhatsApp',icone:'whatsapp',cor:'#3B82F6',ativo:true},
+  {id:'f2',nome:'Instagram',descricao:'Mensagens diretas e stories no Instagram',icone:'instagram',cor:'#EC4899',ativo:true},
+  {id:'f3',nome:'SDR WhatsApp',descricao:'Prospecção ativa via WhatsApp pelo SDR',icone:'sdr',cor:'#27AE60',ativo:true},
+  {id:'f4',nome:'Meta Ads',descricao:'Campanhas de anúncios no Facebook/Instagram',icone:'ads',cor:'#D4AF37',ativo:true},
+  {id:'f5',nome:'Campanha Ademir',descricao:'Campanha gerenciada por Ademir',icone:'target',cor:'#8B5CF6',ativo:true},
+  {id:'f6',nome:'Indicação',descricao:'Cliente indicado por parceiro ou cliente',icone:'handshake',cor:'#00B4A2',ativo:true},
+  {id:'f7',nome:'Google Ads',descricao:'Anúncios no Google Search e Display',icone:'globe',cor:'#E67E22',ativo:true},
+];
+
+// Biblioteca de ícones SVG para fontes
+const FONTE_ICONES = {
+  whatsapp: '<svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>',
+  instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>',
+  ads:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>',
+  target:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+  handshake: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
+  chat:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+  globe:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+  chart:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+  phone:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.42 2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.13 6.13l1.06-1.06a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+  email:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
+  star:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+  people:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  tiktok:    '<svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>',
+  sdr:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.42 2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.13 6.13l1.06-1.06a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+  default:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+};
+function getFonteIco(f){ return FONTE_ICONES[f?.icone||f?.emoji]||FONTE_ICONES.default; }
+
+async function loadFontes(){
+  try{
+    const data = await sb('GET','fontes?order=created_at.asc');
+    if(data && data.length){ fontes = data; }
+    else { fontes = FONTES_PADRAO; }
+  }catch(e){
+    if(!fontes.length) fontes = FONTES_PADRAO;
+  }
+  syncFontesGlobais();
+}
+
+function syncFontesGlobais(){
+  // Atualiza FCLR e sfonte dinamicamente
+  fontes.filter(f=>f.ativo!==false).forEach(f=>{
+    FCLR[f.nome] = f.cor || '#555';
+  });
+}
+
+function renderFontes(){
+  const grid = document.getElementById('fonteGrid'); if(!grid) return;
+  const lista = fontes.filter(f=>f.ativo!==false);
+  const cnt = document.getElementById('fontesCount');
+  if(cnt) cnt.textContent = lista.length + ' fonte'+(lista.length!==1?'s':'')+' cadastrada'+(lista.length!==1?'s':'');
+  const btn = document.getElementById('btnNovaFonte');
+  if(btn) btn.style.display = isAdmin()?'inline-flex':'none';
+
+  if(!lista.length){
+    grid.innerHTML='<div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:10px;color:var(--textdim);font-size:.78rem"><div style="font-size:2.5rem;opacity:.3">📣</div><div style="font-weight:600">Nenhuma fonte cadastrada</div></div>';
+    return;
+  }
+
+  grid.innerHTML = lista.map(f=>{
+    const leadsF = recs.filter(r=>r.fonte===f.nome);
+    const ganhosF = leadsF.filter(r=>r.estagio==='Ganho fechado').length;
+    const recF = leadsF.reduce((s,r)=>s+(Number(r.valor_entrada)||0),0);
+    const conv = leadsF.length ? Math.round(ganhosF/leadsF.length*100) : 0;
+    return `<div class="fonte-card">
+      <div class="fonte-acts">
+        <button class="act" onclick="editFonte('${f.id}')" title="Editar">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="act del" onclick="deleteFonte('${f.id}')" title="Remover">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+        </button>
+      </div>
+      <div class="fonte-cor" style="background:${f.cor}22;color:${f.cor}">${getFonteIco(f)}</div>
+      <div class="fonte-nome">${f.nome}</div>
+      <div class="fonte-desc">${f.descricao||'—'}</div>
+      <div class="fonte-stats">
+        <div class="fonte-stat">
+          <div class="fonte-stat-val" style="color:var(--blue)">${leadsF.length}</div>
+          <div class="fonte-stat-lbl">Leads</div>
+        </div>
+        <div class="fonte-stat">
+          <div class="fonte-stat-val" style="color:var(--green2)">${ganhosF}</div>
+          <div class="fonte-stat-lbl">Ganhos</div>
+        </div>
+        <div class="fonte-stat">
+          <div class="fonte-stat-val" style="color:var(--teal)">${conv}%</div>
+          <div class="fonte-stat-lbl">Conv.</div>
+        </div>
+        <div class="fonte-stat">
+          <div class="fonte-stat-val" style="color:var(--gold2);font-size:.72rem">R$${recF.toLocaleString('pt-BR')}</div>
+          <div class="fonte-stat-lbl">Receita</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:10px">
+        <div style="flex:1;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden">
+          <div style="height:100%;border-radius:2px;background:${f.cor};width:${conv}%;transition:width .6s"></div>
+        </div>
+        <span style="font-size:.58rem;color:${f.cor};font-weight:700">${conv}%</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selIcone(el, icone){
+  fonteEmojiSel = icone;
+  document.getElementById('fnEmoji').value = icone;
+  document.querySelectorAll('.icone-opt').forEach(b=>{ b.style.borderColor='var(--border)'; b.style.color='var(--textmid)'; b.style.background='var(--bg3)'; });
+  el.style.borderColor = fonteCorSel;
+  el.style.color = fonteCorSel;
+  el.style.background = fonteCorSel+'22';
+}
+function selEmoji(el, emoji){ selIcone(el, emoji); }
+
+function selCor(el, cor){
+  fonteCorSel = cor;
+  document.getElementById('fnCor').value = cor;
+  document.querySelectorAll('#corPicker div').forEach(d=>d.style.borderColor='transparent');
+  el.style.borderColor = '#fff';
+}
+
+function openNovaFonte(){
+  if(!isAdmin()){ toast('Apenas administradores podem gerenciar fontes','err'); return; }
+  editFonteId = null;
+  fonteEmojiSel = 'whatsapp'; fonteCorSel = '#3B82F6';
+  document.getElementById('fonteModalTtl').textContent = 'Nova Fonte de Lead';
+  document.getElementById('fnNome').value = '';
+  document.getElementById('fnDesc').value = '';
+  document.getElementById('fnEmoji').value = 'whatsapp';
+  document.querySelectorAll('.icone-opt').forEach(b=>{ b.style.borderColor='var(--border)'; b.style.color='var(--textmid)'; b.style.background='var(--bg3)'; });
+  document.getElementById('fnCor').value = '#3B82F6';
+  document.getElementById('fonteErr').textContent = '';
+  document.querySelectorAll('#corPicker div').forEach(d=>d.style.borderColor='transparent');
+  document.getElementById('modalFonte').classList.add('open');
+}
+
+function editFonte(id){
+  if(!isAdmin()){ toast('Apenas administradores podem editar fontes','err'); return; }
+  const f = fontes.find(x=>x.id===id); if(!f) return;
+  editFonteId = id;
+  fonteEmojiSel = f.icone||f.emoji||'whatsapp'; fonteCorSel = f.cor||'#3B82F6';
+  document.getElementById('fonteModalTtl').textContent = 'Editar Fonte';
+  document.getElementById('fnNome').value = f.nome||'';
+  document.getElementById('fnDesc').value = f.descricao||'';
+  document.getElementById('fnEmoji').value = f.icone||f.emoji||'whatsapp';
+  document.querySelectorAll('.icone-opt').forEach(b=>{ b.style.borderColor='var(--border)'; b.style.color='var(--textmid)'; b.style.background='var(--bg3)'; const sel=document.querySelector('.icone-opt[data-icone="'+(f.icone||f.emoji||'whatsapp')+'"]'); if(sel){ sel.style.borderColor=fonteCorSel; sel.style.color=fonteCorSel; sel.style.background=fonteCorSel+'22'; } });
+  document.getElementById('fnCor').value = f.cor||'#3B82F6';
+  document.getElementById('fonteErr').textContent = '';
+  document.getElementById('modalFonte').classList.add('open');
+}
+
+function closeFonte(){ document.getElementById('modalFonte').classList.remove('open'); }
+
+async function salvarFonte(){
+  const nome = document.getElementById('fnNome').value.trim();
+  const err = document.getElementById('fonteErr');
+  if(!nome){ err.textContent='Nome obrigatório.'; return; }
+  if(!editFonteId && fontes.find(f=>f.nome.toLowerCase()===nome.toLowerCase())){
+    err.textContent='Já existe uma fonte com este nome.'; return;
+  }
+  const icone = document.getElementById('fnEmoji').value.trim() || fonteEmojiSel || 'default';
+  const cor = document.getElementById('fnCor').value || fonteCorSel || '#3B82F6';
+  const data = {nome, descricao:document.getElementById('fnDesc').value.trim(), icone, cor, ativo:true};
+  err.textContent='';
+
+  try{
+    if(editFonteId){
+      await sb('PATCH','fontes?id=eq.'+editFonteId, data);
+      const i = fontes.findIndex(f=>f.id===editFonteId);
+      if(i>-1) fontes[i]={...fontes[i],...data};
+      toast('Fonte atualizada!','ok');
+    } else {
+      const res = await sb('POST','fontes',{...data, created_at:new Date().toISOString()});
+      if(res&&res[0]) fontes.push(res[0]);
+      else { data.id='f'+Date.now(); data.created_at=new Date().toISOString(); fontes.push(data); }
+      toast('Fonte criada!','ok');
+    }
+  }catch(e){
+    // fallback local
+    if(editFonteId){
+      const i=fontes.findIndex(f=>f.id===editFonteId); if(i>-1) fontes[i]={...fontes[i],...data};
+    } else {
+      data.id='f'+Date.now(); data.created_at=new Date().toISOString(); fontes.push(data);
+    }
+    toast('Salvo localmente (execute o SQL para persistir)','inf');
+  }
+
+  syncFontesGlobais();
+  closeFonte();
+  renderFontes();
+  syncSelFontes();
+  addHist('nota',(editFonteId?'Fonte editada: ':'Fonte criada: ')+'<strong>'+nome+'</strong>');
+}
+
+async function deleteFonte(id){
+  if(!isAdmin()){ toast('Apenas administradores podem remover fontes','err'); return; }
+  const f = fontes.find(x=>x.id===id); if(!f) return;
+  const usada = recs.filter(r=>r.fonte===f.nome).length;
+  if(usada > 0 && !confirm('Esta fonte está em uso por '+usada+' lead(s).\nRemover mesmo assim?')) return;
+  try{ await sb('DELETE','fontes?id=eq.'+id); }catch(e){}
+  fontes = fontes.filter(x=>x.id!==id);
+  syncFontesGlobais();
+  renderFontes();
+  syncSelFontes();
+  toast('Fonte removida','inf');
+}
+
+// Sincroniza todos os selects de fonte no formulário e toolbar
+function syncSelFontes(){
+  const lista = fontes.filter(f=>f.ativo!==false).map(f=>f.nome);
+  // Toolbar filter
+  const selFt = document.getElementById('selFt');
+  if(selFt){
+    const prev = selFt.value;
+    selFt.innerHTML = '<option value="">Todas as fontes</option>'
+      + lista.map(n=>'<option value="'+n+'"'+(n===prev?' selected':'')+'>'+n+'</option>').join('');
+  }
+  // Dashboard fonte chart
+  const fFtEl = document.getElementById('fFt');
+  if(fFtEl){
+    const prev = fFtEl.value;
+    fFtEl.innerHTML = '<option value="">Selecione...</option>'
+      + lista.map(n=>'<option value="'+n+'"'+(n===prev?' selected':'')+'>'+n+'</option>').join('');
+  }
 }
 
 
