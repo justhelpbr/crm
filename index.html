@@ -1538,6 +1538,9 @@ async function loadData(){
   try{
     if(SU&&SK){recs=await sb('GET','leads?order=created_at.desc')||[];}
   }catch(e){toast('Erro ao carregar leads: '+e.message,'err');}
+  // Reseta o select de mês para forçar seleção do mês com dados
+  const sel=document.getElementById('dashMesSel');
+  if(sel) sel.innerHTML='';
   renderAll();
 }
 
@@ -1703,7 +1706,10 @@ function renderAll(){
 // ═══ DASHBOARD ═══
 function renderDash(){
   const now = new Date();
-  const elById = id => document.getElementById(id); // evita conflito com variável 'el' abaixo
+  const elById = id => document.getElementById(id);
+
+  // Atualiza horário imediatamente
+  if(elById('dashLastUpdate')) elById('dashLastUpdate').textContent = 'Atualizado: '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 
   const mesCur = mesAtualBR(); // mês real de hoje em BRT
 
@@ -1716,7 +1722,9 @@ function renderDash(){
     // Determina qual mês selecionar por padrão:
     // Se há leads no mês atual → atual; senão → mês mais recente com dados
     const sorted = [...mesesDisp].sort((a,b)=>b.localeCompare(a));
-    const defaultMes = sorted.find(m=>recs.some(r=>mesBR(r.created_at)===m)) || mesCur;
+    // Mês padrão = mês mais recente com leads cadastrados (ignora mês atual se não tiver nada)
+    const mesesComDados = sorted.filter(m => recs.some(r => mesBR(r.created_at) === m));
+    const defaultMes = mesesComDados.length > 0 ? mesesComDados[0] : mesCur;
     const prevVal = selMes.value;
 
     // Repopula sempre para garantir que todos os meses aparecem
