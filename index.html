@@ -459,6 +459,87 @@ tr:hover .td-acts{opacity:1}
 .fonte-stat-val{font-family:"Montserrat",sans-serif;font-size:.9rem;font-weight:900}
 .fonte-stat-lbl{font-size:.56rem;color:var(--textdim);text-transform:uppercase;letter-spacing:.5px}
 
+
+/* ═══ BATE PONTO ═══ */
+.bp-wrap { display:flex; flex-direction:column; height:100%; overflow:hidden }
+.bp-sub { display:none }
+.bp-sub.on { display:flex; flex-direction:column; flex:1; overflow:hidden }
+.bp-nav { display:flex; gap:4px; padding:10px 14px; border-bottom:1px solid var(--border); flex-shrink:0; flex-wrap:wrap }
+.bp-tab { padding:6px 14px; border-radius:var(--rs); border:1px solid var(--border); background:var(--bg3); color:var(--textdim); font-size:.72rem; font-weight:600; cursor:pointer; transition:.15s }
+.bp-tab:hover { border-color:var(--border2); color:#E2E8F0 }
+.bp-tab.on { background:var(--red); border-color:var(--red); color:#fff }
+.bp-body { flex:1; overflow-y:auto; padding:16px }
+
+/* Grid de funcionários */
+.bp-emp-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px }
+.bp-emp-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--r); padding:16px; cursor:pointer; transition:.2s; position:relative }
+.bp-emp-card:hover { border-color:var(--red2); transform:translateY(-2px); box-shadow:var(--shadow) }
+.bp-emp-av { width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,var(--red),var(--gold)); display:flex; align-items:center; justify-content:center; font-size:.78rem; font-weight:800; color:#fff; margin-bottom:10px }
+.bp-emp-name { font-size:.82rem; font-weight:600; margin-bottom:4px }
+.bp-emp-st { font-size:.66rem; display:flex; align-items:center; gap:5px; color:var(--textdim) }
+.bp-st-dot { width:6px; height:6px; border-radius:50%; background:var(--textdim); flex-shrink:0 }
+.bp-st-dot.grn { background:#27ae60 }
+.bp-st-dot.yel { background:#e67e22 }
+.bp-st-dot.red { background:var(--red2) }
+
+/* PIN */
+.bp-pin-wrap { max-width:300px; margin:0 auto; display:flex; flex-direction:column; align-items:center; gap:18px; padding:24px 0 }
+.bp-pin-av { width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,var(--red),var(--gold)); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800; color:#fff }
+.bp-pin-name { font-size:18px; font-weight:700 }
+.bp-pin-hint { font-size:.74rem; color:var(--textdim) }
+.bp-pin-dots { display:flex; gap:12px }
+.bp-pin-dot { width:12px; height:12px; border-radius:50%; background:var(--bg4); border:1px solid var(--border); transition:.15s }
+.bp-pin-dot.filled { background:var(--red); border-color:var(--red) }
+.bp-pin-dot.err { background:var(--red2); animation:bpShake .3s ease }
+@keyframes bpShake { 0%,100%{transform:none} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+.bp-numpad { display:grid; grid-template-columns:repeat(3,72px); gap:6px }
+.bp-nk { background:var(--bg2); border:1px solid var(--border); border-radius:var(--rs); width:72px; height:64px; font-size:20px; font-weight:600; color:#E2E8F0; cursor:pointer; transition:.12s; display:flex; align-items:center; justify-content:center }
+.bp-nk:hover { background:var(--bg3); border-color:var(--red2) }
+.bp-nk:active { transform:scale(.92) }
+.bp-nk.del { font-size:15px; color:var(--textdim) }
+.bp-nk.empty { opacity:0; pointer-events:none }
+
+/* Punch screen */
+.bp-punch-hdr { display:flex; align-items:center; justify-content:space-between; padding:14px; background:var(--bg2); border-radius:var(--r); margin-bottom:14px }
+.bp-pu-av { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,var(--red),var(--gold)); display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:800; color:#fff; flex-shrink:0 }
+.bp-banco-chip { display:inline-flex; align-items:center; gap:6px; background:var(--bg3); border:1px solid var(--border); border-radius:99px; padding:5px 12px; font-size:.68rem; font-weight:600; color:var(--textdim) }
+.bp-banco-val { font-family:'Montserrat',sans-serif; font-size:.78rem; font-weight:800 }
+.bp-banco-val.pos { color:#27ae60 }
+.bp-banco-val.neg { color:var(--red2) }
+.bp-clock { font-family:'Montserrat',sans-serif; font-size:clamp(36px,8vw,56px); font-weight:900; text-align:center; letter-spacing:-2px; color:#E2E8F0; margin:10px 0 4px }
+.bp-date { font-size:.72rem; color:var(--textdim); text-align:center; margin-bottom:16px }
+.bp-timeline { background:var(--bg2); border:1px solid var(--border); border-radius:var(--r); padding:16px; margin-bottom:14px }
+.bp-tl-title { font-size:.6rem; font-weight:700; color:var(--textdim); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px }
+.bp-tl-item { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--border) }
+.bp-tl-item:last-child { border-bottom:none; padding-bottom:0 }
+.bp-tl-ic { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.8rem; flex-shrink:0; border:1px solid var(--border); background:var(--bg3); color:var(--textdim) }
+.bp-tl-ic.done { background:#27ae60; border-color:#27ae60; color:#fff }
+.bp-tl-lbl { font-size:.6rem; font-weight:700; color:var(--textdim); text-transform:uppercase; letter-spacing:.3px }
+.bp-tl-time { font-family:'Montserrat',sans-serif; font-size:1rem; font-weight:800; color:#E2E8F0 }
+.bp-tl-time.empty { color:var(--bg4); font-size:.78rem }
+.bp-act-btn { width:100%; padding:14px; border-radius:var(--r); border:none; font-size:.86rem; font-weight:700; cursor:pointer; transition:.15s; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:8px }
+.bp-act-btn.primary { background:var(--red); color:#fff; box-shadow:0 4px 20px rgba(192,57,43,.3) }
+.bp-act-btn.primary:hover { background:var(--red2) }
+.bp-act-btn.sec { background:var(--bg2); color:var(--textdim); border:1px solid var(--border); font-size:.76rem; padding:10px }
+.bp-act-btn.sec:hover { border-color:var(--red2); color:var(--red2) }
+
+/* Admin tabs */
+.bp-stat-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; margin-bottom:16px }
+.bp-stat { background:var(--bg2); border:1px solid var(--border); border-radius:var(--r); padding:14px }
+.bp-stat-v { font-family:'Montserrat',sans-serif; font-size:1.8rem; font-weight:900; margin:4px 0 2px }
+.bp-stat-l { font-size:.58rem; color:var(--textdim); font-weight:700; text-transform:uppercase; letter-spacing:.5px }
+.bp-table-wrap { overflow-x:auto; background:var(--bg2); border:1px solid var(--border); border-radius:var(--r) }
+.bp-table { width:100%; border-collapse:collapse; font-size:.74rem }
+.bp-table th { text-align:left; font-size:.6rem; font-weight:700; color:var(--textdim); text-transform:uppercase; letter-spacing:.5px; padding:10px 12px; border-bottom:1px solid var(--border) }
+.bp-table td { padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:middle }
+.bp-table tr:last-child td { border-bottom:none }
+.bp-table tbody tr:hover td { background:var(--bg3) }
+.bp-badge { display:inline-flex; align-items:center; padding:2px 8px; border-radius:99px; font-size:.62rem; font-weight:700 }
+.bp-b-grn { background:rgba(39,174,96,.12); color:#27ae60; border:1px solid rgba(39,174,96,.2) }
+.bp-b-red { background:rgba(192,57,43,.1); color:var(--red2); border:1px solid rgba(192,57,43,.2) }
+.bp-b-yel { background:rgba(230,126,34,.1); color:#e67e22; border:1px solid rgba(230,126,34,.2) }
+.bp-b-gray { background:var(--bg3); color:var(--textdim); border:1px solid var(--border) }
+
 </style>
 </head>
 <body>
@@ -543,6 +624,10 @@ tr:hover .td-acts{opacity:1}
     <div class="sb-sec">Relatórios</div>
     <button class="sb-btn" onclick="goV('relatorios',this)">
       <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Relatórios
+    </button>
+    <div class="sb-sec">Equipe</div>
+    <button class="sb-btn" onclick="goV('bateponto',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Bate Ponto
     </button>
     <div class="sb-sec">Sistema</div>
     <button class="sb-btn" onclick="goV('produtos',this)">
@@ -1210,6 +1295,89 @@ CREATE POLICY "pub_c" ON colaboradores FOR ALL USING (true) WITH CHECK (true);</
       <div class="fonte-grid" id="fonteGrid"></div>
     </div>
 
+
+    <!-- BATE PONTO -->
+    <div class="view" id="view-bateponto">
+      <div class="bp-wrap">
+        <!-- Sub-views -->
+        <div class="bp-sub on" id="bps-home">
+          <div style="padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+            <div>
+              <div style="font-size:.86rem;font-weight:700">Registro de Ponto</div>
+              <div style="font-size:.64rem;color:var(--textdim)" id="bp-home-date">—</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <div style="font-family:Montserrat,sans-serif;font-size:1.1rem;font-weight:800;color:#E2E8F0" id="bp-home-clock">--:--</div>
+              <button class="btn-cancel" style="font-size:.68rem;padding:5px 10px" onclick="bpGoAdmin()">⚙ Admin</button>
+            </div>
+          </div>
+          <div class="bp-body">
+            <div style="font-size:.72rem;color:var(--textdim);margin-bottom:12px">Selecione seu nome para registrar:</div>
+            <div class="bp-emp-grid" id="bp-emp-grid">
+              <div class="empty-st"><div class="spin"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PIN -->
+        <div class="bp-sub" id="bps-pin">
+          <div style="padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0">
+            <button onclick="bpShowSub('home')" style="background:none;border:none;color:var(--textdim);cursor:pointer;font-size:.72rem;display:flex;align-items:center;gap:4px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><polyline points="15 18 9 12 15 6"/></svg>Voltar
+            </button>
+          </div>
+          <div class="bp-body">
+            <div class="bp-pin-wrap">
+              <div class="bp-pin-av" id="bp-pin-av">?</div>
+              <div class="bp-pin-name" id="bp-pin-nm">—</div>
+              <div class="bp-pin-hint">Digite seu PIN de acesso</div>
+              <div class="bp-pin-dots">
+                <div class="bp-pin-dot" id="bpd0"></div>
+                <div class="bp-pin-dot" id="bpd1"></div>
+                <div class="bp-pin-dot" id="bpd2"></div>
+                <div class="bp-pin-dot" id="bpd3"></div>
+              </div>
+              <div style="font-size:.68rem;color:var(--red2);min-height:14px" id="bp-pin-err"></div>
+              <div class="bp-numpad">
+                <button class="bp-nk" onclick="bpKp('1')">1</button>
+                <button class="bp-nk" onclick="bpKp('2')">2</button>
+                <button class="bp-nk" onclick="bpKp('3')">3</button>
+                <button class="bp-nk" onclick="bpKp('4')">4</button>
+                <button class="bp-nk" onclick="bpKp('5')">5</button>
+                <button class="bp-nk" onclick="bpKp('6')">6</button>
+                <button class="bp-nk" onclick="bpKp('7')">7</button>
+                <button class="bp-nk" onclick="bpKp('8')">8</button>
+                <button class="bp-nk" onclick="bpKp('9')">9</button>
+                <button class="bp-nk empty"></button>
+                <button class="bp-nk" onclick="bpKp('0')">0</button>
+                <button class="bp-nk del" onclick="bpKdel()">⌫</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PUNCH -->
+        <div class="bp-sub" id="bps-punch">
+          <div class="bp-body" id="bp-punch-body"></div>
+        </div>
+
+        <!-- ADMIN -->
+        <div class="bp-sub" id="bps-admin">
+          <div class="bp-nav">
+            <button class="bp-tab on" id="bpt-hoje" onclick="bpATab('hoje')">📊 Hoje</button>
+            <button class="bp-tab" id="bpt-func" onclick="bpATab('func')">👥 Funcionários</button>
+            <button class="bp-tab" id="bpt-banco" onclick="bpATab('banco')">⏱ Banco de Horas</button>
+            <button class="bp-tab" id="bpt-hist" onclick="bpATab('hist')">📅 Histórico</button>
+            <button class="bp-tab" id="bpt-faltas" onclick="bpATab('faltas')">📋 Faltas</button>
+            <button class="bp-tab" onclick="bpShowSub('home')" style="margin-left:auto">← Voltar</button>
+          </div>
+          <div class="bp-body" id="bp-admin-body">
+            <div class="empty-st"><div class="spin"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
 </div><!-- /app -->
@@ -1426,6 +1594,59 @@ CREATE POLICY "pub_c" ON colaboradores FOR ALL USING (true) WITH CHECK (true);</
     <div class="dr-foot">
       <button class="btn-cancel" onclick="closeFonte()">Cancelar</button>
       <button class="btn-save" onclick="salvarFonte()">Salvar Fonte</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL FALTA BATE PONTO -->
+<div class="overlay" id="bp-mod-falta">
+  <div class="drawer" style="max-width:400px">
+    <div class="dr-head">
+      <div class="dr-ttl">Registrar Falta / Ausência</div>
+      <button class="dr-close" onclick="document.getElementById('bp-mod-falta').classList.remove('open')">✕</button>
+    </div>
+    <div class="dr-body">
+      <div class="fg"><label>Tipo de Ausência</label>
+        <select id="bp-falta-tipo" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:8px 10px;color:#E2E8F0;font-size:.78rem">
+          <option value="falta">Falta</option>
+          <option value="atestado">Atestado Médico</option>
+          <option value="folga">Folga</option>
+          <option value="ferias">Férias</option>
+          <option value="licenca">Licença</option>
+        </select>
+      </div>
+      <div class="fg"><label>Justificativa</label>
+        <textarea id="bp-falta-just" rows="4" placeholder="Descreva o motivo..." style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:8px 10px;color:#E2E8F0;font-size:.78rem;resize:vertical"></textarea>
+      </div>
+    </div>
+    <div class="dr-foot">
+      <button class="btn-cancel" onclick="document.getElementById('bp-mod-falta').classList.remove('open')">Cancelar</button>
+      <button class="btn-save" onclick="bpSubmitFalta()">Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FUNC BATE PONTO -->
+<div class="overlay" id="bp-mod-emp">
+  <div class="drawer" style="max-width:400px">
+    <div class="dr-head">
+      <div class="dr-ttl" id="bp-emp-ttl">Novo Funcionário</div>
+      <button class="dr-close" onclick="document.getElementById('bp-mod-emp').classList.remove('open')">✕</button>
+    </div>
+    <div class="dr-body">
+      <input type="hidden" id="bp-emp-id">
+      <div class="fg"><label>Nome completo *</label><input id="bp-emp-name" placeholder="Ex: Ana Silva"></div>
+      <div class="fg"><label>PIN (4 dígitos) *</label><input type="number" id="bp-emp-pin" placeholder="0000" min="0" max="9999"></div>
+      <div class="fg"><label>Jornada diária (horas)</label><input type="number" id="bp-emp-jornada" value="8" min="1" max="24" step="0.5"></div>
+      <div class="fg" style="display:flex;align-items:center;gap:8px;flex-direction:row">
+        <input type="checkbox" id="bp-emp-admin" style="width:15px;height:15px;accent-color:var(--red)">
+        <label for="bp-emp-admin" style="font-size:.78rem;color:#E2E8F0;font-weight:400;text-transform:none;letter-spacing:0">É administrador do Bate Ponto</label>
+      </div>
+    </div>
+    <div class="dr-foot">
+      <button class="btn-cancel" onclick="document.getElementById('bp-mod-emp').classList.remove('open')">Cancelar</button>
+      <button class="btn-save" onclick="bpSaveEmp()">Salvar</button>
     </div>
   </div>
 </div>
@@ -2661,7 +2882,7 @@ async function delColab(id,email){
 }
 
 // ═══ NAV ═══
-const TITLES={dashboard:'Página Inicial',leads:'Clientes Potenciais',negocios:'Negócios',kanban:'Kanban',agenda:'Agenda',parados:'Leads Parados',meta:'Meta e Receita',funil:'Funil de Conversão',mapa:'Mapa de Leads',historico:'Histórico',contrato:'Contrato Digital',clicksign:'Clicksign',recebiveis:'Recebíveis',inadimplencia:'Inadimplência',comissoes:'Comissões',produtos:'Produtos',fontes:'Fontes de Lead',despesas:'Despesas',metasColab:'Metas da Equipe',reativacao:'Funil de Reativação',relatorios:'Relatórios',log:'Log de Acesso',colaboradores:'Colaboradores',config:'Configurações'};
+const TITLES={dashboard:'Página Inicial',leads:'Clientes Potenciais',negocios:'Negócios',kanban:'Kanban',agenda:'Agenda',parados:'Leads Parados',meta:'Meta e Receita',funil:'Funil de Conversão',mapa:'Mapa de Leads',historico:'Histórico',contrato:'Contrato Digital',clicksign:'Clicksign',recebiveis:'Recebíveis',inadimplencia:'Inadimplência',comissoes:'Comissões',bateponto:'Bate Ponto',produtos:'Produtos',fontes:'Fontes de Lead',despesas:'Despesas',metasColab:'Metas da Equipe',reativacao:'Funil de Reativação',relatorios:'Relatórios',log:'Log de Acesso',colaboradores:'Colaboradores',config:'Configurações'};
 
 function goV(v,btn){
   curV=v;curSub='todos';
@@ -2715,6 +2936,7 @@ function goV(v,btn){
   if(v==='log') renderLog();
   if(v==='produtos'){ renderProdutos(); renderCatFilter(); }
   if(v==='fontes'){ renderFontes(); testarTabelaFontes(); }
+  if(v==='bateponto'){ initBatePonto(); }
   if(v==='despesas'){ populateDespMes(); renderDespesas(); }
   if(v==='metasColab'){ populateMetaColabMes(); renderMetasColab(); }
   if(v==='reativacao') renderReativacao();
@@ -4443,6 +4665,473 @@ function syncSelFontes(){
     fFtEl.innerHTML = '<option value="">Selecione...</option>'
       + lista.map(n=>'<option value="'+n+'"'+(n===prev?' selected':'')+'>'+n+'</option>').join('');
   }
+}
+
+
+
+// ═══════════════════════════════════════════════════
+// 🕐 BATE PONTO
+// ═══════════════════════════════════════════════════
+let bpSB = null;       // cliente Supabase separado para o bate ponto
+let bpEmp = null;      // funcionário selecionado
+let bpPinBuf = '';     // buffer do PIN
+let bpPunchRec = null; // registro do dia
+let bpClockInt = null; // interval do relógio
+
+const BP_SB_URL = 'https://foihotuwgfpwqtrchubj.supabase.co';
+const BP_SB_KEY = 'sb_publishable_HW83qPaqEl4OmYVVXy8nIA_1dO9ffQw';
+
+function bpGetSB(){
+  if(!bpSB) bpSB = window.supabase?.createClient(BP_SB_URL, BP_SB_KEY);
+  return bpSB;
+}
+
+async function initBatePonto(){
+  // Carrega supabase-js se não estiver disponível
+  if(!window.supabase){
+    await new Promise(res=>{
+      const s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+      s.onload=res; document.head.appendChild(s);
+    });
+  }
+  bpGetSB();
+  bpShowSub('home');
+  bpStartClock();
+  bpLoadHome();
+}
+
+function bpStartClock(){
+  if(bpClockInt) clearInterval(bpClockInt);
+  const tick=()=>{
+    const n=new Date();
+    const cl=document.getElementById('bp-home-clock');
+    if(cl) cl.textContent=n.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const dt=document.getElementById('bp-home-date');
+    if(dt) dt.textContent=n.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+    const pc=document.getElementById('bp-punch-clock');
+    if(pc) pc.textContent=n.toLocaleTimeString('pt-BR');
+  };
+  tick(); bpClockInt=setInterval(tick,1000);
+}
+
+function bpShowSub(name){
+  document.querySelectorAll('.bp-sub').forEach(s=>s.classList.remove('on'));
+  const el=document.getElementById('bps-'+name);
+  if(el) el.classList.add('on');
+}
+
+function bpTodayStr(){ return new Date().toISOString().split('T')[0]; }
+function bpFmtT(ts){ return ts?new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):null; }
+function bpFmtH(h){
+  const s=h<0?'-':''; const a=Math.abs(h);
+  return s+Math.floor(a)+'h'+String(Math.round((a%1)*60)).padStart(2,'0');
+}
+function bpCap(s){ return s?s.charAt(0).toUpperCase()+s.slice(1):''; }
+function bpIni(name){ return name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+
+// ── HOME ─────────────────────────────────────
+async function bpLoadHome(){
+  const grid=document.getElementById('bp-emp-grid'); if(!grid) return;
+  grid.innerHTML='<div class="empty-st"><div class="spin"></div></div>';
+  const sb=bpGetSB(); if(!sb){ grid.innerHTML='<div class="empty-st">Supabase não conectado</div>'; return; }
+  const {data:emps,error}=await sb.from('employees').select('*').order('name');
+  if(error||!emps){ grid.innerHTML='<div class="empty-st">Erro ao carregar. Verifique as credenciais do Bate Ponto.</div>'; return; }
+  if(!emps.length){ grid.innerHTML='<div class="empty-st"><div class="ei">👥</div><div>Nenhum funcionário. Acesse Admin para cadastrar.</div></div>'; return; }
+  const today=bpTodayStr();
+  const {data:recs}=await sb.from('time_records').select('*').eq('date',today);
+  const {data:abss}=await sb.from('absences').select('*').eq('date',today);
+  const rm={}; (recs||[]).forEach(r=>rm[r.employee_id]=r);
+  const am={}; (abss||[]).forEach(a=>am[a.employee_id]=a);
+  grid.innerHTML=emps.map(e=>{
+    const r=rm[e.id],a=am[e.id];
+    let st='Não registrou',dc='';
+    if(a){st=bpCap(a.tipo);dc='yel'}
+    else if(r?.saida){st='Saída registrada';dc=''}
+    else if(r?.inicio_intervalo&&!r?.fim_intervalo){st='Em intervalo';dc='yel'}
+    else if(r?.entrada){st='Em serviço';dc='grn'}
+    return `<div class="bp-emp-card" onclick="bpSelEmp('${e.id}')">
+      <div class="bp-emp-av">${bpIni(e.name)}</div>
+      <div class="bp-emp-name">${e.name}</div>
+      <div class="bp-emp-st"><span class="bp-st-dot ${dc}"></span>${st}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── PIN ──────────────────────────────────────
+async function bpSelEmp(id){
+  const sb=bpGetSB();
+  const {data:e}=await sb.from('employees').select('*').eq('id',id).single();
+  if(!e) return;
+  bpEmp=e; bpPinBuf='';
+  bpUpdDots();
+  document.getElementById('bp-pin-err').textContent='';
+  document.getElementById('bp-pin-av').textContent=bpIni(e.name);
+  document.getElementById('bp-pin-nm').textContent=e.name;
+  bpShowSub('pin');
+}
+
+function bpKp(d){
+  if(bpPinBuf.length>=4) return;
+  bpPinBuf+=d; bpUpdDots();
+  if(bpPinBuf.length===4) setTimeout(bpChkPin,120);
+}
+function bpKdel(){ bpPinBuf=bpPinBuf.slice(0,-1); bpUpdDots(); document.getElementById('bp-pin-err').textContent=''; }
+function bpUpdDots(){
+  for(let i=0;i<4;i++){
+    const d=document.getElementById('bpd'+i);
+    if(!d) continue;
+    d.classList.toggle('filled',i<bpPinBuf.length);
+    d.classList.remove('err');
+  }
+}
+async function bpChkPin(){
+  const stored=String(bpEmp.pin).padStart(4,'0');
+  if(bpPinBuf===stored||bpPinBuf===String(bpEmp.pin)){
+    await bpInitPunch();
+    bpShowSub('punch');
+  } else {
+    for(let i=0;i<4;i++) document.getElementById('bpd'+i)?.classList.add('err');
+    document.getElementById('bp-pin-err').textContent='PIN incorreto.';
+    setTimeout(()=>{ bpPinBuf=''; bpUpdDots(); document.getElementById('bp-pin-err').textContent=''; },1100);
+  }
+}
+
+// ── PUNCH ────────────────────────────────────
+async function bpInitPunch(){
+  const sb=bpGetSB();
+  const today=bpTodayStr();
+  const {data:rec}=await sb.from('time_records').select('*').eq('employee_id',bpEmp.id).eq('date',today).maybeSingle();
+  const {data:abs}=await sb.from('absences').select('*').eq('employee_id',bpEmp.id).eq('date',today).maybeSingle();
+  bpPunchRec=rec;
+  bpDrawPunch(rec,abs);
+}
+
+function bpDrawPunch(rec,abs){
+  const body=document.getElementById('bp-punch-body'); if(!body) return;
+  // Calcula banco de horas
+  bpGetSB().from('time_records').select('hora_extra').eq('employee_id',bpEmp.id).not('hora_extra','is',null).then(({data})=>{
+    const total=(data||[]).reduce((s,r)=>s+(r.hora_extra||0),0);
+    const bel=document.getElementById('bp-banco-val');
+    if(bel){ bel.textContent=bpFmtH(Math.abs(total)); bel.className='bp-banco-val '+(total>0.05?'pos':total<-0.05?'neg':''); }
+  });
+
+  const items=[
+    {ic:'→',lbl:'Entrada',ts:bpFmtT(rec?.entrada)},
+    {ic:'☕',lbl:'Início Intervalo',ts:bpFmtT(rec?.inicio_intervalo)},
+    {ic:'↩',lbl:'Fim Intervalo',ts:bpFmtT(rec?.fim_intervalo)},
+    {ic:'←',lbl:'Saída',ts:bpFmtT(rec?.saida)},
+  ];
+
+  let tl='';
+  if(abs){
+    tl=`<div style="text-align:center;padding:20px 0;color:#e67e22">
+      <div style="font-size:1.5rem;margin-bottom:6px">📋</div>
+      <div style="font-weight:700">${bpCap(abs.tipo)}</div>
+      <div style="font-size:.7rem;color:var(--textdim);margin-top:4px;line-height:1.6">${abs.justificativa}</div>
+    </div>`;
+  } else {
+    tl=items.map(it=>`<div class="bp-tl-item">
+      <div class="bp-tl-ic ${it.ts?'done':''}">${it.ic}</div>
+      <div><div class="bp-tl-lbl">${it.lbl}</div>
+      <div class="bp-tl-time ${it.ts?'':'empty'}">${it.ts||'--:--'}</div></div>
+    </div>`).join('');
+  }
+
+  let acts='';
+  if(abs){
+    acts=`<div style="text-align:center;font-size:.76rem;color:var(--textdim);padding:10px">${bpCap(abs.tipo)} registrada para hoje</div>`;
+  } else if(rec?.saida){
+    const ht=rec.horas_trabalhadas?bpFmtH(rec.horas_trabalhadas):'--';
+    const ex=rec.hora_extra||0;
+    const exStr=ex>0.05?` • <span style="color:#27ae60">+${bpFmtH(ex)} extra</span>`:ex<-0.05?` • <span style="color:var(--red2)">${bpFmtH(ex)} a compensar</span>`:'';
+    acts=`<div style="text-align:center;font-size:.78rem;color:var(--textdim);padding:12px;line-height:2">✅ Dia encerrado • <strong style="color:#27ae60">${ht}</strong> trabalhadas${exStr}</div>`;
+  } else {
+    let lbl,fn,showFalta=false;
+    if(!rec?.entrada){lbl='→ Registrar Entrada';fn='bpDoEntrada';showFalta=true;}
+    else if(!rec?.inicio_intervalo){lbl='☕ Iniciar Intervalo';fn='bpDoInicio';}
+    else if(!rec?.fim_intervalo){lbl='↩ Fim do Intervalo';fn='bpDoFim';}
+    else{lbl='← Registrar Saída';fn='bpDoSaida';}
+    acts=`<button class="bp-act-btn primary" onclick="${fn}()">${lbl}</button>
+      ${showFalta?'<button class="bp-act-btn sec" onclick="document.getElementById(\'bp-mod-falta\').classList.add(\'open\')">📋 Registrar Falta / Ausência</button>':''}`;
+  }
+
+  body.innerHTML=`
+    <div class="bp-punch-hdr">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="bp-pu-av">${bpIni(bpEmp.name)}</div>
+        <div>
+          <div style="font-size:.86rem;font-weight:700">${bpEmp.name}</div>
+          <div style="font-size:.62rem;color:var(--textdim)">${bpEmp.jornada_horas||8}h/dia</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="bp-banco-chip">Banco <span class="bp-banco-val" id="bp-banco-val">0h00</span></div>
+        <button class="btn-cancel" style="font-size:.66rem;padding:5px 10px" onclick="bpShowSub('home');bpLoadHome()">Sair</button>
+      </div>
+    </div>
+    <div class="bp-clock" id="bp-punch-clock">--:--:--</div>
+    <div class="bp-date" id="bp-punch-date">${new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})}</div>
+    <div class="bp-timeline">
+      <div class="bp-tl-title">Registros de Hoje</div>
+      ${tl}
+    </div>
+    <div id="bp-acts">${acts}</div>`;
+}
+
+async function bpDoEntrada(){
+  const sb=bpGetSB();
+  const now=new Date().toISOString();
+  const {data,error}=await sb.from('time_records')
+    .upsert({employee_id:bpEmp.id,date:bpTodayStr(),entrada:now},{onConflict:'employee_id,date'})
+    .select().single();
+  if(error){toast('Erro ao registrar entrada','err');return;}
+  bpPunchRec=data; toast('Entrada registrada! ✅','ok');
+  bpDrawPunch(bpPunchRec,null);
+}
+async function bpDoInicio(){
+  const sb=bpGetSB();
+  if(!bpPunchRec) return;
+  const {data,error}=await sb.from('time_records').update({inicio_intervalo:new Date().toISOString()}).eq('id',bpPunchRec.id).select().single();
+  if(error){toast('Erro','err');return;}
+  bpPunchRec=data; toast('Intervalo iniciado ☕','inf'); bpDrawPunch(bpPunchRec,null);
+}
+async function bpDoFim(){
+  const sb=bpGetSB();
+  if(!bpPunchRec) return;
+  const {data,error}=await sb.from('time_records').update({fim_intervalo:new Date().toISOString()}).eq('id',bpPunchRec.id).select().single();
+  if(error){toast('Erro','err');return;}
+  bpPunchRec=data; toast('Intervalo encerrado ↩','inf'); bpDrawPunch(bpPunchRec,null);
+}
+async function bpDoSaida(){
+  const sb=bpGetSB();
+  if(!bpPunchRec) return;
+  const now=new Date();
+  const entrada=new Date(bpPunchRec.entrada);
+  const intMs=(bpPunchRec.inicio_intervalo&&bpPunchRec.fim_intervalo)?new Date(bpPunchRec.fim_intervalo)-new Date(bpPunchRec.inicio_intervalo):0;
+  const trabH=(now-entrada-intMs)/3600000;
+  const extra=trabH-(bpEmp.jornada_horas||8);
+  const {data,error}=await sb.from('time_records').update({
+    saida:now.toISOString(),
+    horas_trabalhadas:Math.round(trabH*100)/100,
+    hora_extra:Math.round(extra*100)/100
+  }).eq('id',bpPunchRec.id).select().single();
+  if(error){toast('Erro','err');return;}
+  bpPunchRec=data;
+  toast(`Saída registrada! ${bpFmtH(trabH)} trabalhadas ✅`,'ok');
+  bpDrawPunch(bpPunchRec,null);
+}
+
+async function bpSubmitFalta(){
+  const sb=bpGetSB();
+  const tipo=document.getElementById('bp-falta-tipo').value;
+  const just=document.getElementById('bp-falta-just').value.trim();
+  if(!just){toast('Informe a justificativa','err');return;}
+  const {error}=await sb.from('absences').upsert(
+    {employee_id:bpEmp.id,date:bpTodayStr(),tipo,justificativa:just},
+    {onConflict:'employee_id,date'}
+  );
+  if(error){toast('Erro: '+error.message,'err');return;}
+  document.getElementById('bp-mod-falta').classList.remove('open');
+  document.getElementById('bp-falta-just').value='';
+  toast('Registrada!','ok');
+  bpInitPunch();
+}
+
+// ── ADMIN ─────────────────────────────────────
+async function bpGoAdmin(){
+  if(!isAdmin()){ toast('Apenas administradores do CRM podem acessar o Admin do Bate Ponto','err'); return; }
+  bpShowSub('admin');
+  bpATab('hoje');
+}
+
+const bpTabTitles={hoje:'Resumo do Dia',func:'Funcionários',banco:'Banco de Horas',hist:'Histórico',faltas:'Faltas'};
+function bpATab(t){
+  document.querySelectorAll('.bp-tab').forEach(b=>b.classList.remove('on'));
+  const tb=document.getElementById('bpt-'+t); if(tb) tb.classList.add('on');
+  if(t==='hoje') bpLoadHoje();
+  if(t==='func') bpLoadFunc();
+  if(t==='banco') bpLoadBancoAdmin();
+  if(t==='hist') bpLoadHist();
+  if(t==='faltas') bpLoadFaltas();
+}
+
+async function bpLoadHoje(){
+  const sb=bpGetSB();
+  const body=document.getElementById('bp-admin-body'); if(!body) return;
+  body.innerHTML='<div class="empty-st"><div class="spin"></div></div>';
+  const today=bpTodayStr();
+  const {data:emps}=await sb.from('employees').select('*').order('name');
+  const {data:recs}=await sb.from('time_records').select('*').eq('date',today);
+  const {data:abss}=await sb.from('absences').select('*').eq('date',today);
+  const rm={}; (recs||[]).forEach(r=>rm[r.employee_id]=r);
+  const am={}; (abss||[]).forEach(a=>am[a.employee_id]=a);
+  let present=0,done=0,absent=0,onLeave=0;
+  (emps||[]).forEach(e=>{const r=rm[e.id],a=am[e.id];if(a)onLeave++;else if(r?.saida)done++;else if(r?.entrada)present++;else absent++;});
+  const stats=[{l:'Total',v:(emps||[]).length,c:''},{l:'Em Serviço',v:present,c:'#27ae60'},{l:'Encerrado',v:done,c:''},{l:'Ausente',v:absent,c:'var(--red2)'},{l:'Falta/Folga',v:onLeave,c:'#e67e22'}];
+  const rows=(emps||[]).map(e=>{
+    const r=rm[e.id],a=am[e.id];
+    let st,sc;
+    if(a){st=bpCap(a.tipo);sc='bp-b-yel'}else if(r?.saida){st='Encerrado';sc='bp-b-gray'}else if(r?.inicio_intervalo&&!r?.fim_intervalo){st='Intervalo';sc='bp-b-yel'}else if(r?.entrada){st='Em serviço';sc='bp-b-grn'}else{st='Ausente';sc='bp-b-red'}
+    const trab=r?.horas_trabalhadas?bpFmtH(r.horas_trabalhadas):r?.entrada?'<span style="color:#e67e22">Em curso</span>':'—';
+    const f=ts=>ts?`<span style="font-family:Montserrat,monospace;font-size:.7rem">${bpFmtT(ts)}</span>`:'<span style="color:var(--textdim)">—</span>';
+    return `<tr><td><strong>${e.name}</strong></td>${[r?.entrada,r?.inicio_intervalo,r?.fim_intervalo,r?.saida].map(f).join('')}<td>${trab}</td><td><span class="bp-badge ${sc}">${st}</span></td></tr>`;
+  }).join('');
+  body.innerHTML=`
+    <div class="bp-stat-row">${stats.map(s=>`<div class="bp-stat"><div class="bp-stat-l">${s.l}</div><div class="bp-stat-v" style="color:${s.c||'#E2E8F0'}">${s.v}</div></div>`).join('')}</div>
+    <div class="bp-table-wrap"><table class="bp-table">
+      <thead><tr><th>Funcionário</th><th>Entrada</th><th>Iníc.Int.</th><th>Fim Int.</th><th>Saída</th><th>Trabalhado</th><th>Status</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="7" style="text-align:center;color:var(--textdim);padding:20px">Nenhum registro</td></tr>'}</tbody>
+    </table></div>`;
+}
+
+async function bpLoadFunc(){
+  const sb=bpGetSB();
+  const body=document.getElementById('bp-admin-body'); if(!body) return;
+  body.innerHTML='<div class="empty-st"><div class="spin"></div></div>';
+  const {data:emps}=await sb.from('employees').select('*').order('name');
+  body.innerHTML=`
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <button class="btn-new" onclick="bpOpenNewEmp()"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo Funcionário</button>
+    </div>
+    <div class="bp-table-wrap"><table class="bp-table">
+      <thead><tr><th>Nome</th><th>PIN</th><th>Jornada</th><th>Admin</th><th>Ações</th></tr></thead>
+      <tbody>${(emps||[]).map(e=>`<tr>
+        <td><strong>${e.name}</strong></td>
+        <td style="font-family:Montserrat,monospace;font-size:.72rem">${String(e.pin).padStart(4,'0')}</td>
+        <td>${e.jornada_horas}h</td>
+        <td>${e.is_admin?'<span class="bp-badge bp-b-yel">Admin</span>':'<span class="bp-badge bp-b-gray">—</span>'}</td>
+        <td style="display:flex;gap:6px">
+          <button class="act" onclick='bpEditEmp(${JSON.stringify(e)})' title="Editar"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          <button class="act del" onclick="bpDelEmp('${e.id}','${e.name}')" title="Remover"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
+        </td>
+      </tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--textdim);padding:20px">Nenhum funcionário</td></tr>'}</tbody>
+    </table></div>`;
+}
+
+async function bpLoadBancoAdmin(){
+  const sb=bpGetSB();
+  const body=document.getElementById('bp-admin-body'); if(!body) return;
+  body.innerHTML='<div class="empty-st"><div class="spin"></div></div>';
+  const {data:emps}=await sb.from('employees').select('*').order('name');
+  const {data:recs}=await sb.from('time_records').select('employee_id,horas_trabalhadas').not('saida','is',null);
+  const hm={},dm={};
+  (recs||[]).forEach(r=>{hm[r.employee_id]=(hm[r.employee_id]||0)+(r.horas_trabalhadas||0);dm[r.employee_id]=(dm[r.employee_id]||0)+1;});
+  body.innerHTML=`<div class="bp-table-wrap"><table class="bp-table">
+    <thead><tr><th>Funcionário</th><th>Jornada/dia</th><th>Dias</th><th>Total Trabalhado</th><th>Previsto</th><th>Saldo</th></tr></thead>
+    <tbody>${(emps||[]).map(e=>{
+      const h=hm[e.id]||0,d=dm[e.id]||0,prev=d*(e.jornada_horas||8),saldo=h-prev;
+      const sc=saldo>0.05?'bp-b-grn':saldo<-0.05?'bp-b-red':'bp-b-gray';
+      return `<tr><td><strong>${e.name}</strong></td><td>${e.jornada_horas}h</td><td>${d} dias</td><td style="font-family:Montserrat,monospace">${bpFmtH(h)}</td><td style="font-family:Montserrat,monospace">${bpFmtH(prev)}</td><td><span class="bp-badge ${sc}">${saldo>=0?'+':''}${bpFmtH(saldo)}</span></td></tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+async function bpLoadHist(){
+  const sb=bpGetSB();
+  const body=document.getElementById('bp-admin-body'); if(!body) return;
+  const today=bpTodayStr();
+  const firstDay=today.slice(0,7)+'-01';
+  body.innerHTML=`
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <select id="bph-emp" onchange="bpFetchHist()" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:7px 10px;color:#E2E8F0;font-size:.72rem">
+        <option value="">Todos</option>
+      </select>
+      <input type="date" id="bph-from" value="${firstDay}" onchange="bpFetchHist()" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:7px 10px;color:#E2E8F0;font-size:.72rem">
+      <input type="date" id="bph-to" value="${today}" onchange="bpFetchHist()" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:7px 10px;color:#E2E8F0;font-size:.72rem">
+    </div>
+    <div id="bph-table"><div class="empty-st"><div class="spin"></div></div></div>`;
+  const {data:emps}=await sb.from('employees').select('id,name').order('name');
+  const sel=document.getElementById('bph-emp');
+  (emps||[]).forEach(e=>{const o=document.createElement('option');o.value=e.id;o.textContent=e.name;sel?.appendChild(o);});
+  bpFetchHist();
+}
+
+async function bpFetchHist(){
+  const sb=bpGetSB();
+  const eid=document.getElementById('bph-emp')?.value;
+  const from=document.getElementById('bph-from')?.value;
+  const to=document.getElementById('bph-to')?.value;
+  let q=sb.from('time_records').select('*,employees(name)').not('saida','is',null).order('date',{ascending:false}).limit(200);
+  if(eid) q=q.eq('employee_id',eid);
+  if(from) q=q.gte('date',from);
+  if(to) q=q.lte('date',to);
+  const {data:recs}=await q;
+  const el=document.getElementById('bph-table'); if(!el) return;
+  el.innerHTML=`<div class="bp-table-wrap"><table class="bp-table">
+    <thead><tr><th>Data</th><th>Funcionário</th><th>Entrada</th><th>Intervalo</th><th>Saída</th><th>Trabalhado</th><th>H.Extra</th></tr></thead>
+    <tbody>${(recs||[]).map(r=>{
+      const intMs=r.inicio_intervalo&&r.fim_intervalo?new Date(r.fim_intervalo)-new Date(r.inicio_intervalo):0;
+      const ex=r.hora_extra||0;
+      const exC=ex>0.05?'color:#27ae60':ex<-0.05?'color:var(--red2)':'color:var(--textdim)';
+      return `<tr>
+        <td style="font-family:Montserrat,monospace;font-size:.7rem">${new Date(r.date+'T12:00:00').toLocaleDateString('pt-BR')}</td>
+        <td>${r.employees?.name||'—'}</td>
+        <td style="font-family:Montserrat,monospace;font-size:.7rem">${bpFmtT(r.entrada)||'—'}</td>
+        <td style="font-family:Montserrat,monospace;font-size:.7rem">${intMs>0?bpFmtH(intMs/3600000):'—'}</td>
+        <td style="font-family:Montserrat,monospace;font-size:.7rem">${bpFmtT(r.saida)||'—'}</td>
+        <td style="font-family:Montserrat,monospace;font-size:.7rem">${r.horas_trabalhadas?bpFmtH(r.horas_trabalhadas):'—'}</td>
+        <td style="font-family:Montserrat,monospace;font-size:.7rem;${exC}">${ex?(ex>0?'+':'')+bpFmtH(ex):'—'}</td>
+      </tr>`;
+    }).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--textdim);padding:20px">Nenhum registro</td></tr>'}</tbody>
+  </table></div>`;
+}
+
+async function bpLoadFaltas(){
+  const sb=bpGetSB();
+  const body=document.getElementById('bp-admin-body'); if(!body) return;
+  body.innerHTML='<div class="empty-st"><div class="spin"></div></div>';
+  const {data:abs}=await sb.from('absences').select('*,employees(name)').order('date',{ascending:false}).limit(100);
+  body.innerHTML=`<div class="bp-table-wrap"><table class="bp-table">
+    <thead><tr><th>Data</th><th>Funcionário</th><th>Tipo</th><th>Justificativa</th></tr></thead>
+    <tbody>${(abs||[]).map(a=>`<tr>
+      <td style="font-family:Montserrat,monospace;font-size:.7rem">${new Date(a.date+'T12:00:00').toLocaleDateString('pt-BR')}</td>
+      <td>${a.employees?.name||'—'}</td>
+      <td><span class="bp-badge bp-b-yel">${bpCap(a.tipo)}</span></td>
+      <td style="font-size:.7rem;color:var(--textdim)">${a.justificativa}</td>
+    </tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--textdim);padding:20px">Nenhuma falta</td></tr>'}</tbody>
+  </table></div>`;
+}
+
+// CRUD Funcionários
+function bpOpenNewEmp(){
+  document.getElementById('bp-emp-ttl').textContent='Novo Funcionário';
+  document.getElementById('bp-emp-id').value='';
+  document.getElementById('bp-emp-name').value='';
+  document.getElementById('bp-emp-pin').value='';
+  document.getElementById('bp-emp-jornada').value='8';
+  document.getElementById('bp-emp-admin').checked=false;
+  document.getElementById('bp-mod-emp').classList.add('open');
+}
+function bpEditEmp(e){
+  document.getElementById('bp-emp-ttl').textContent='Editar Funcionário';
+  document.getElementById('bp-emp-id').value=e.id;
+  document.getElementById('bp-emp-name').value=e.name;
+  document.getElementById('bp-emp-pin').value=e.pin;
+  document.getElementById('bp-emp-jornada').value=e.jornada_horas;
+  document.getElementById('bp-emp-admin').checked=e.is_admin;
+  document.getElementById('bp-mod-emp').classList.add('open');
+}
+async function bpSaveEmp(){
+  const sb=bpGetSB();
+  const id=document.getElementById('bp-emp-id').value;
+  const name=document.getElementById('bp-emp-name').value.trim();
+  const pin=String(document.getElementById('bp-emp-pin').value).trim();
+  const jornada=parseFloat(document.getElementById('bp-emp-jornada').value)||8;
+  const isAdm=document.getElementById('bp-emp-admin').checked;
+  if(!name||!pin){toast('Preencha nome e PIN','err');return;}
+  const payload={name,pin:pin.padStart(4,'0'),jornada_horas:jornada,is_admin:isAdm};
+  const {error}=id?await sb.from('employees').update(payload).eq('id',id):await sb.from('employees').insert(payload);
+  if(error){toast('Erro: '+error.message,'err');return;}
+  document.getElementById('bp-mod-emp').classList.remove('open');
+  toast(id?'Atualizado!':'Funcionário adicionado!','ok');
+  bpLoadFunc();
+}
+async function bpDelEmp(id,name){
+  if(!confirm(`Remover ${name}?\nTodos os registros serão excluídos.`)) return;
+  const {error}=await bpGetSB().from('employees').delete().eq('id',id);
+  if(error){toast('Erro','err');return;}
+  toast('Removido.','inf'); bpLoadFunc();
 }
 
 
