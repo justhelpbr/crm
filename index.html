@@ -146,6 +146,7 @@ td{padding:8px 12px;vertical-align:middle;white-space:nowrap}
 .p-sign{background:rgba(39,174,96,.12);color:var(--green2)}
 .p-cont{background:rgba(230,126,34,.12);color:#FDBA74}
 .p-ganho{background:rgba(46,213,115,.1);color:#4ADE80;border:1px solid rgba(46,213,115,.2)}
+.p-parc{background:rgba(252,211,77,.1);color:#FCD34D;border:1px solid rgba(252,211,77,.2)}
 .p-canc{background:rgba(252,129,129,.12);color:#FC8181}
 .p-cong{background:rgba(161,161,170,.12);color:#A1A1AA}
 .p-ag{background:rgba(0,180,162,.12);color:#2DD4BF}
@@ -540,6 +541,19 @@ tr:hover .td-acts{opacity:1}
 .bp-b-yel { background:rgba(230,126,34,.1); color:#e67e22; border:1px solid rgba(230,126,34,.2) }
 .bp-b-gray { background:var(--bg3); color:var(--textdim); border:1px solid var(--border) }
 
+
+/* LEMBRETES DE COBRANÇA */
+.lembrete-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:8px;transition:.2s}
+.lembrete-card:hover{border-color:var(--border2)}
+.lembrete-card.urgente{border-left:3px solid var(--red2)}
+.lembrete-card.atencao{border-left:3px solid var(--gold2)}
+.lembrete-card.sugestao{border-left:3px solid #A78BFA}
+.lembrete-tipo{font-size:.58rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
+.btn-lembrete{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--rs);border:none;font-size:.68rem;font-weight:700;cursor:pointer;transition:.15s;background:rgba(39,174,96,.12);color:#27ae60}
+.btn-lembrete:hover{background:rgba(39,174,96,.22)}
+.btn-lembrete.wa{background:rgba(39,174,96,.12);color:#27ae60}
+.btn-lembrete.wa:hover{background:rgba(39,174,96,.25)}
+
 </style>
 </head>
 <body>
@@ -620,6 +634,10 @@ tr:hover .td-acts{opacity:1}
     </button>
     <button class="sb-btn" onclick="goV('comissoes',this)">
       <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Comissões
+    </button>
+    <button class="sb-btn" onclick="goV('lembretes',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="12" y2="13"/></svg>Lembretes
+      <span class="sb-badge red" id="sbLemb" style="display:none">0</span>
     </button>
     <div class="sb-sec">Relatórios</div>
     <button class="sb-btn" onclick="goV('relatorios',this)">
@@ -1378,6 +1396,18 @@ CREATE POLICY "pub_c" ON colaboradores FOR ALL USING (true) WITH CHECK (true);</
       </div>
     </div>
 
+
+    <!-- LEMBRETES DE COBRANÇA -->
+    <div class="view" id="view-lembretes">
+      <div style="padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:.74rem;color:var(--textdim)">Lembretes e cobranças automáticas por WhatsApp</span>
+        <button class="btn-export" onclick="renderLembretes()" style="margin-left:auto">
+          <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Atualizar
+        </button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:14px" id="lembretesGrid"></div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
 </div><!-- /app -->
@@ -1682,10 +1712,10 @@ let currentUser = null, histLog = [];
 
 // ═══ CONSTANTES ═══
 const LSTATUS = ['Novo Lead','Em Atendimento','Retornar','Duplicado','Perdeu o Interesse','Nao Ligar Mais'];
-const NESTAGES = ['Proposta de preco','Negociacao/Revisao','Invoice emitida','Invoice Paga','Contrato Enviado','Aguardando Assinatura Cliente','Contrato Assinado','Ganho fechado','Caso Aprovado','Caso Reprovado','Correcao','Financeiro','Enviado','Cancelado','Congelado','Enviado Com Disclaimer'];
+const NESTAGES = ['Proposta de preco','Negociacao/Revisao','Invoice emitida','Invoice Paga','Contrato Enviado','Aguardando Assinatura Cliente','Contrato Assinado','Ganho Parcial','Ganho fechado','Caso Aprovado','Caso Reprovado','Correcao','Financeiro','Enviado','Cancelado','Congelado','Enviado Com Disclaimer'];
 
 // Estágios que representam processo com PAGAMENTO CONFIRMADO (entrada paga)
-const ESTAGIOS_PAGOU = ['Invoice Paga','Contrato Assinado','Ganho fechado','Caso Aprovado','Financeiro','Enviado','Enviado Com Disclaimer'];
+const ESTAGIOS_PAGOU = ['Invoice Paga','Contrato Assinado','Ganho Parcial','Ganho fechado','Caso Aprovado','Financeiro','Enviado','Enviado Com Disclaimer'];
 // Estágios que representam processo FECHADO/GANHO (processo concluído)
 const ESTAGIOS_GANHO = ['Ganho fechado','Caso Aprovado'];
 // Verifica se lead tem entrada paga
@@ -1741,12 +1771,12 @@ async function loadResps(){
     }
   }catch(e){}
 }
-const ECLR = {'Proposta de preco':'#8B5CF6','Negociacao/Revisao':'#D4AF37','Invoice emitida':'#00B4A2','Invoice Paga':'#27AE60','Contrato Enviado':'#E67E22','Aguardando Assinatura Cliente':'#3B82F6','Contrato Assinado':'#2ECC71','Ganho fechado':'#4ADE80','Caso Aprovado':'#86EFAC','Caso Reprovado':'#FC8181','Correcao':'#F472B6','Financeiro':'#FDE047','Enviado':'#60A5FA','Cancelado':'#FC8181','Congelado':'#A1A1AA','Enviado Com Disclaimer':'#FDBA74'};
+const ECLR = {'Proposta de preco':'#8B5CF6','Negociacao/Revisao':'#D4AF37','Invoice emitida':'#00B4A2','Invoice Paga':'#27AE60','Contrato Enviado':'#E67E22','Aguardando Assinatura Cliente':'#3B82F6','Contrato Assinado':'#2ECC71','Ganho Parcial':'#FCD34D','Ganho fechado':'#4ADE80','Caso Aprovado':'#86EFAC','Caso Reprovado':'#FC8181','Correcao':'#F472B6','Financeiro':'#FDE047','Enviado':'#60A5FA','Cancelado':'#FC8181','Congelado':'#A1A1AA','Enviado Com Disclaimer':'#FDBA74'};
 const SCLR = {'Novo Lead':'#60A5FA','Em Atendimento':'#86EFAC','Retornar':'#FDE047','Duplicado':'#A1A1AA','Perdeu o Interesse':'#FC8181','Nao Ligar Mais':'#FCA5A5'};
 const FCLR = {'Meta ADS Whatsapp':'#3B82F6','Instagram':'#EC4899','SDR WhatsApp':'#27AE60','Meta Ads':'#D4AF37','Campanha Ademir':'#8B5CF6','Indicação':'#00B4A2','Google Ads':'#E67E22'};
 
 function sClass(s){const m={'Novo Lead':'p-novo','Em Atendimento':'p-atend','Retornar':'p-ret','Duplicado':'p-dup','Perdeu o Interesse':'p-perd','Nao Ligar Mais':'p-nao'};return m[s]||'p-novo';}
-function eClass(s){const m={'Proposta de preco':'p-prop','Negociacao/Revisao':'p-neg','Invoice emitida':'p-inv','Invoice Paga':'p-sign','Contrato Enviado':'p-cont','Aguardando Assinatura Cliente':'p-ag','Contrato Assinado':'p-sign','Ganho fechado':'p-ganho','Caso Aprovado':'p-ganho','Caso Reprovado':'p-canc','Correcao':'p-inv','Financeiro':'p-neg','Enviado':'p-cas','Cancelado':'p-canc','Congelado':'p-cong','Enviado Com Disclaimer':'p-edc'};return m[s]||'p-prop';}
+function eClass(s){const m={'Proposta de preco':'p-prop','Negociacao/Revisao':'p-neg','Invoice emitida':'p-inv','Invoice Paga':'p-sign','Contrato Enviado':'p-cont','Aguardando Assinatura Cliente':'p-ag','Contrato Assinado':'p-sign','Ganho Parcial':'p-parc','Ganho fechado':'p-ganho','Caso Aprovado':'p-ganho','Caso Reprovado':'p-canc','Correcao':'p-inv','Financeiro':'p-neg','Enviado':'p-cas','Cancelado':'p-canc','Congelado':'p-cong','Enviado Com Disclaimer':'p-edc'};return m[s]||'p-prop';}
 function fClass(s){const m={'Meta ADS Whatsapp':'fm','Instagram':'fi','SDR WhatsApp':'fs','Meta Ads':'fa','Campanha Ademir':'fc','Indicação':'fc','Google Ads':'fa'};return m[s]||'fo';}
 function cClass(s){return s==='Atendimento'?'p-atend':s==='Nao Atendeu'?'p-neg':'p-nao';}
 function sfonte(f){const m={'Meta ADS Whatsapp':'Meta WA','Instagram':'Insta','SDR WhatsApp':'SDR','Meta Ads':'Meta','Campanha Ademir':'Camp','Indicação':'Indica','Google Ads':'Google'};return m[f]||f||'—';}
@@ -1949,6 +1979,9 @@ function renderAll(){
   if(curV==='recebiveis')renderRecebiveis();
   if(curV==='inadimplencia')renderInadimplencia();
   if(curV==='comissoes')renderComissoes();
+  if(curV==='lembretes')renderLembretes();
+  // Badge lembretes urgentes
+  setTimeout(()=>{ const urg=recs.filter(r=>(['Contrato Assinado','Invoice Paga'].includes(r.estagio)&&!(Number(r.valor_entrada)||0))||(r.estagio==='Ganho Parcial'&&(Number(r.valor_restante)||0)>0)); const el=document.getElementById('sbLemb'); if(el){el.textContent=urg.length;el.style.display=urg.length?'inline':'none';}},300);
   if(curV==='reativacao')renderReativacao();
   if(curV==='metasColab')renderMetasColab();
   // Update reativacao badge
@@ -2383,6 +2416,7 @@ function renderDrTab(r,tab){
       ['Cadastrado por',r.cadastrado_por||'JustHelp','var(--teal)'],
       ['Nº Processo',r.numero_processo||'—'],
       ['Custo Serviço',r.estagio==='Ganho fechado'?'R$ '+CUSTO_SERVICO.toLocaleString('pt-BR')+' (por processo)':'—','var(--red2)'],
+      ['Custo Serviço',r.estagio==='Ganho Parcial'||r.estagio==='Ganho fechado'?'R$ '+CUSTO_SERVICO.toLocaleString('pt-BR'):'—','var(--red2)'],
       ['Comissão',r.estagio==='Ganho fechado'&&planoVal(r)>0?'R$ '+Math.round(planoVal(r)*0.1).toLocaleString('pt-BR')+' — '+(r.comissao_status==='pago'?'✅ Paga':'⏳ Pendente'):'—',r.comissao_status==='pago'?'var(--green2)':'var(--gold2)'],
       ['Data Processo',r.data_processo?new Date(r.data_processo+'T12:00:00').toLocaleDateString('pt-BR'):'—'],
       ['Próx. Contato',r.proximo_contato?new Date(r.proximo_contato+'T12:00:00').toLocaleDateString('pt-BR'):'—'],
@@ -2892,7 +2926,7 @@ async function delColab(id,email){
 }
 
 // ═══ NAV ═══
-const TITLES={dashboard:'Página Inicial',leads:'Clientes Potenciais',negocios:'Negócios',kanban:'Kanban',agenda:'Agenda',parados:'Leads Parados',meta:'Meta e Receita',funil:'Funil de Conversão',mapa:'Mapa de Leads',historico:'Histórico',contrato:'Contrato Digital',clicksign:'Clicksign',recebiveis:'Recebíveis',inadimplencia:'Inadimplência',comissoes:'Comissões',bateponto:'Bate Ponto',produtos:'Produtos',fontes:'Fontes de Lead',despesas:'Despesas',metasColab:'Metas da Equipe',reativacao:'Funil de Reativação',relatorios:'Relatórios',log:'Log de Acesso',colaboradores:'Colaboradores',config:'Configurações'};
+const TITLES={dashboard:'Página Inicial',leads:'Clientes Potenciais',negocios:'Negócios',kanban:'Kanban',agenda:'Agenda',parados:'Leads Parados',meta:'Meta e Receita',funil:'Funil de Conversão',mapa:'Mapa de Leads',historico:'Histórico',contrato:'Contrato Digital',clicksign:'Clicksign',recebiveis:'Recebíveis',inadimplencia:'Inadimplência',comissoes:'Comissões',lembretes:'Lembretes de Cobrança',bateponto:'Bate Ponto',produtos:'Produtos',fontes:'Fontes de Lead',despesas:'Despesas',metasColab:'Metas da Equipe',reativacao:'Funil de Reativação',relatorios:'Relatórios',log:'Log de Acesso',colaboradores:'Colaboradores',config:'Configurações'};
 
 function goV(v,btn){
   curV=v;curSub='todos';
@@ -2942,6 +2976,7 @@ function goV(v,btn){
   if(v==='recebiveis') renderRecebiveis();
   if(v==='inadimplencia') renderInadimplencia();
   if(v==='comissoes'){ populateComMes(); renderComissoes(); }
+  if(v==='lembretes') renderLembretes();
   if(v==='relatorios') renderRelatorios();
   if(v==='log') renderLog();
   if(v==='produtos'){ renderProdutos(); renderCatFilter(); }
@@ -3997,6 +4032,19 @@ function gerarNotificacoes(){
         leadId:r.id, ts: ult.getTime()});
     }
 
+    // Lembretes de cobrança críticos
+    const ent2=Number(r.valor_entrada)||0;
+    const rest2=Number(r.valor_restante)||0;
+    if(!ent2 && ['Contrato Assinado','Invoice Paga'].includes(r.estagio)){
+      novo.push({id:'semEnt_'+r.id,tipo:'cobranca',ico:'💬',bg:'rgba(39,174,96,.08)',
+        txt:'<strong>'+r.nome+'</strong> — contrato assinado sem entrada recebida',
+        leadId:r.id,ts:new Date(r.updated_at||r.created_at).getTime()});
+    }
+    if(r.estagio==='Ganho Parcial' && rest2>0){
+      novo.push({id:'parcPend_'+r.id,tipo:'cobranca',ico:'💠',bg:'rgba(252,211,77,.08)',
+        txt:'<strong>'+r.nome+'</strong> — Ganho Parcial · R$ '+rest2.toLocaleString('pt-BR')+' pendente',
+        leadId:r.id,ts:new Date(r.updated_at||r.created_at).getTime()});
+    }
     // Parcelas atrasadas
     const pi = getParcInfo(r.plano);
     if(pi){
@@ -5149,6 +5197,203 @@ async function bpDelEmp(id,name){
   const {error}=await bpGetSB().from('employees').delete().eq('id',id);
   if(error){toast('Erro','err');return;}
   toast('Removido.','inf'); bpLoadFunc();
+}
+
+
+
+// ═══════════════════════════════════════════════════
+// 💬 LEMBRETES DE COBRANÇA
+// ═══════════════════════════════════════════════════
+
+function renderLembretes(){
+  const el = document.getElementById('lembretesGrid'); if(!el) return;
+  el.innerHTML = '<div class="empty-st"><div class="spin"></div></div>';
+
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const meFil = isAdmin() ? null : currentUser?.nome;
+  const base = meFil ? recs.filter(r=>r.responsavel===meFil) : recs;
+
+  const urgentes   = []; // prometeram hoje ou atrasados
+  const atencao    = []; // parcelas próximas (7 dias)
+  const sugestoes  = []; // antecipação (processo quase concluído)
+
+  base.forEach(r=>{
+    const nome = r.nome;
+    const wn = (r.whatsapp||r.telefone||'').replace(/\D/g,'');
+    const ent = Number(r.valor_entrada)||0;
+    const rest = Number(r.valor_restante)||0;
+    const plano = r.plano||'';
+
+    // 1. PROMETEU PAGAR — proximo_contato é hoje ou já passou, sem entrada ainda
+    if(r.proximo_contato && !ent){
+      const d = new Date(r.proximo_contato+'T12:00:00'); d.setHours(0,0,0,0);
+      const dias = Math.round((hoje-d)/86400000);
+      if(dias >= 0 && dias <= 7 && !['Ganho fechado','Ganho Parcial','Cancelado','Congelado'].includes(r.estagio)){
+        urgentes.push({
+          r, tipo:'entrada', prioridade:'urgente',
+          titulo: dias===0 ? '🔴 Prometeu pagar HOJE' : `🔴 Prometeu pagar há ${dias} dia${dias>1?'s':''}`,
+          desc: `${nome} — aguardando entrada de R$ ${planoVal(r).toLocaleString('pt-BR')} (${plano})`,
+          msgWA: `Olá ${nome}! Tudo bem? Passando para lembrar que hoje é o dia combinado para o pagamento da entrada do seu processo. PIX: justhelpbr@gmail.com 😊 Qualquer dúvida estou à disposição!`,
+          wn
+        });
+      }
+    }
+
+    // 2. GANHO PARCIAL — tem restante a receber
+    if(r.estagio==='Ganho Parcial' && rest > 0){
+      const pi = getParcInfo(plano);
+      if(pi){
+        // Parcelas PIX — verifica vencidas e próximas
+        const base_dt = r.data_processo ? new Date(r.data_processo+'T12:00:00') : new Date(r.created_at);
+        const parcSt = r.parcelas_status||{};
+        for(let i=1;i<=pi.n;i++){
+          if(parcSt[i]==='pago') continue;
+          const venc = new Date(base_dt); venc.setMonth(venc.getMonth()+i-1); venc.setHours(0,0,0,0);
+          const diasV = Math.round((venc-hoje)/86400000);
+          if(diasV < 0){ // vencida
+            urgentes.push({
+              r, tipo:'parcela_vencida', prioridade:'urgente',
+              titulo:`🔴 Parcela ${i}/${pi.n} vencida há ${Math.abs(diasV)} dia${Math.abs(diasV)>1?'s':''}`,
+              desc:`${nome} — PIX Parcelado ${plano} · Parcela de R$ ${pi.val.toLocaleString('pt-BR')}`,
+              msgWA:`Olá ${nome}! 😊 Passando para lembrar que a parcela ${i} do seu processo venceu em ${venc.toLocaleDateString('pt-BR')}. O valor é R$ ${pi.val.toLocaleString('pt-BR')} via PIX para justhelpbr@gmail.com. Podemos regularizar hoje?`,
+              wn
+            });
+          } else if(diasV <= 7){ // próxima (7 dias)
+            atencao.push({
+              r, tipo:'parcela_proxima', prioridade:'atencao',
+              titulo:`🟡 Parcela ${i}/${pi.n} vence em ${diasV===0?'HOJE':diasV+' dia'+(diasV>1?'s':'')}`,
+              desc:`${nome} — Vence em ${venc.toLocaleDateString('pt-BR')} · R$ ${pi.val.toLocaleString('pt-BR')}`,
+              msgWA:`Olá ${nome}! Tudo bem? 😊 Lembrando que a parcela ${i} do seu processo vence em ${venc.toLocaleDateString('pt-BR')}. Valor: R$ ${pi.val.toLocaleString('pt-BR')} · PIX: justhelpbr@gmail.com. Qualquer dúvida pode chamar!`,
+              wn
+            });
+          }
+          break; // só avisa da próxima pendente
+        }
+      } else {
+        // Parcelado sem estrutura de PIX — lembra do restante
+        atencao.push({
+          r, tipo:'restante', prioridade:'atencao',
+          titulo:`🟡 Restante a receber`,
+          desc:`${nome} — Ganho Parcial · R$ ${rest.toLocaleString('pt-BR')} pendente`,
+          msgWA:`Olá ${nome}! Passando para informar que ainda temos R$ ${rest.toLocaleString('pt-BR')} do seu processo em aberto. PIX: justhelpbr@gmail.com. Podemos combinar o pagamento?`,
+          wn
+        });
+      }
+    }
+
+    // 3. SUGESTÃO ANTECIPAÇÃO — processo em estágio avançado (Enviado, Financeiro, Caso Aprovado)
+    const estagiosAvancados = ['Financeiro','Enviado','Enviado Com Disclaimer','Caso Aprovado'];
+    if(estagiosAvancados.includes(r.estagio) && rest > 0){
+      sugestoes.push({
+        r, tipo:'antecipacao', prioridade:'sugestao',
+        titulo:`💜 Sugerir pagamento antecipado`,
+        desc:`${nome} — Processo em "${r.estagio}" · Restante R$ ${rest.toLocaleString('pt-BR')}`,
+        msgWA:`Olá ${nome}! Boas notícias sobre o seu processo — está em fase avançada de conclusão! 🎉 Caso queira aproveitar e antecipar o restante (R$ ${rest.toLocaleString('pt-BR')}), o PIX é justhelpbr@gmail.com. Mas não se preocupe, você paga só quando quiser 😊`,
+        wn
+      });
+    }
+
+    // 4. SEM ENTRADA — leads com contrato assinado mas sem entrada registrada
+    if(['Contrato Assinado','Invoice Paga'].includes(r.estagio) && !ent){
+      urgentes.push({
+        r, tipo:'sem_entrada', prioridade:'urgente',
+        titulo:`🔴 Contrato assinado sem entrada`,
+        desc:`${nome} — ${r.estagio} · Aguardando pagamento`,
+        msgWA:`Olá ${nome}! Seu contrato foi assinado com sucesso! ✅ Para darmos início ao processo, precisamos confirmar o pagamento da entrada. PIX: justhelpbr@gmail.com · Valor: R$ ${planoVal(r).toLocaleString('pt-BR')}. Qualquer dúvida pode chamar!`,
+        wn
+      });
+    }
+  });
+
+  const total = urgentes.length + atencao.length + sugestoes.length;
+  const badge = document.getElementById('sbLemb');
+  const urgCount = urgentes.length + atencao.length;
+  if(badge){ badge.textContent = urgCount; badge.style.display = urgCount>0?'inline':'none'; }
+
+  if(!total){
+    el.innerHTML = '<div class="empty-st"><div class="ei" style="font-size:2rem">✅</div><div style="font-weight:600">Nenhum lembrete pendente</div><div>Todos os clientes estão em dia!</div></div>';
+    return;
+  }
+
+  const renderSecao = (titulo, cor, lista) => {
+    if(!lista.length) return '';
+    return `<div style="margin-bottom:20px">
+      <div style="font-size:.64rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:${cor};margin-bottom:8px;display:flex;align-items:center;gap:6px">
+        ${titulo} <span style="background:${cor}22;color:${cor};border-radius:99px;padding:1px 8px;font-size:.6rem">${lista.length}</span>
+      </div>
+      ${lista.map(item => renderLembCard(item)).join('')}
+    </div>`;
+  };
+
+  el.innerHTML = renderSecao('Urgente — Ação necessária agora', 'var(--red2)', urgentes)
+    + renderSecao('Atenção — Vence em breve', 'var(--gold2)', atencao)
+    + renderSecao('Sugestão — Antecipação de pagamento', '#A78BFA', sugestoes);
+}
+
+function renderLembCard(item){
+  const {r, prioridade, titulo, desc, msgWA, wn} = item;
+  const waUrl = wn ? `https://wa.me/55${wn}?text=${encodeURIComponent(msgWA)}` : '';
+  const waIcon = `<svg viewBox="0 0 24 24" fill="currentColor" style="width:12px;height:12px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`;
+  return `<div class="lembrete-card ${prioridade}">
+    <div style="display:flex;align-items:flex-start;gap:10px">
+      <div style="flex:1">
+        <div style="font-size:.74rem;font-weight:700;margin-bottom:3px">${titulo}</div>
+        <div style="font-size:.7rem;color:var(--textdim);margin-bottom:8px;line-height:1.5">${desc}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${wn ? `<button class="btn-lembrete wa" onclick="window.open('${waUrl}','_blank')" title="Abrir WhatsApp com mensagem pronta">
+            ${waIcon} Enviar Lembrete no WhatsApp
+          </button>` : '<span style="font-size:.64rem;color:var(--textdim)">Sem WhatsApp cadastrado</span>'}
+          <button class="btn-lembrete" style="background:rgba(59,130,246,.1);color:#60A5FA" onclick="openDet('${r.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:11px;height:11px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Ver Lead
+          </button>
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:.6rem;color:var(--textdim)">${r.responsavel||'—'}</div>
+        <div style="font-size:.6rem;color:var(--textdim);margin-top:2px">${mesBR(r.created_at)?nomeMesBR(mesBR(r.created_at)):'—'}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// Botão de lembrete rápido dentro do drawer do lead
+function btnLembreteRapido(r){
+  const wn=(r.whatsapp||r.telefone||'').replace(/\D/g,'');
+  if(!wn) return '';
+  const ent=Number(r.valor_entrada)||0;
+  const rest=Number(r.valor_restante)||0;
+  let msgs = [];
+
+  if(!ent && !['Ganho fechado','Cancelado','Congelado'].includes(r.estagio)){
+    msgs.push({
+      label:'💬 Lembrete de Entrada',
+      msg:`Olá ${r.nome}! Tudo bem? Passando para lembrar do pagamento da entrada do seu processo conosco. PIX: justhelpbr@gmail.com · Valor: R$ ${planoVal(r).toLocaleString('pt-BR')}. Qualquer dúvida estou à disposição! 😊`
+    });
+  }
+  if(r.estagio==='Ganho Parcial' && rest>0){
+    msgs.push({
+      label:'💬 Lembrete de Parcela',
+      msg:`Olá ${r.nome}! Passando para lembrar da próxima parcela do seu processo. Valor: R$ ${rest.toLocaleString('pt-BR')} · PIX: justhelpbr@gmail.com. Obrigado! 😊`
+    });
+  }
+  if(['Financeiro','Enviado','Caso Aprovado','Enviado Com Disclaimer'].includes(r.estagio) && rest>0){
+    msgs.push({
+      label:'💜 Sugerir Antecipação',
+      msg:`Olá ${r.nome}! Seu processo está quase concluído! 🎉 Aproveite e antecipe o restante (R$ ${rest.toLocaleString('pt-BR')}) · PIX: justhelpbr@gmail.com. Mas não se preocupe, só quando quiser! 😊`
+    });
+  }
+
+  if(!msgs.length) return '';
+  return `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+    <div style="font-size:.6rem;font-weight:700;color:var(--textdim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Lembretes Rápidos</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+    ${msgs.map(m=>`<button onclick="window.open('https://wa.me/55${wn}?text=${encodeURIComponent(m.msg)}','_blank')" 
+      style="display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:var(--rs);border:1px solid rgba(39,174,96,.2);background:rgba(39,174,96,.08);color:#27ae60;font-size:.66rem;font-weight:700;cursor:pointer">
+      <svg viewBox="0 0 24 24" fill="currentColor" style="width:11px;height:11px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      ${m.label}
+    </button>`).join('')}
+    </div>
+  </div>`;
 }
 
 
