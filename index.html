@@ -1903,6 +1903,16 @@ function onLogin(user){
   addAccessLog('login','Login realizado');
   loadResps();
   loadProdutos();
+  // Migra fontes antigas para as novas se necessário
+  const fontesLocal = localStorage.getItem('jh_fontes');
+  if(fontesLocal){
+    try{
+      const fl = JSON.parse(fontesLocal)||[];
+      const nomesAntigos = ['Meta ADS Whatsapp','SDR WhatsApp','Meta Ads','Campanha Ademir','Google Ads'];
+      const temAntigo = fl.some(f=>nomesAntigos.includes(f.nome));
+      if(temAntigo){ localStorage.removeItem('jh_fontes'); }
+    }catch(e){}
+  }
   loadFontes();
   loadDespesas();
   loadData();
@@ -2258,7 +2268,7 @@ function formHtml(r){
   +['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(a=>'<option'+(a===r.uf?' selected':'')+'>'+a+'</option>').join('')
   +'</select></div></div>'
   +'<div class="fg-sec">⚖️ Processo</div>'
-  +'<div class="fg-2"><div class="fg"><label>Fonte</label><select id="fFt"><option value="">Selecione...</option>'  +fontes.filter(f=>f.ativo!==false).map(f=>'<option value="'+f.nome+'"'+(f.nome===r.fonte?' selected':'')+'>'+f.nome+'</option>').join('')  +'</select></div><div class="fg"><label>Negativado em</label><select id="fEl"><option value="">Selecione...</option>'
+  +'<div class="fg-2"><div class="fg"><label>Fonte <button type="button" onclick="abrirModalNovaFonte()" style="background:none;border:none;color:var(--textdim);cursor:pointer;font-size:.62rem;padding:0 4px;vertical-align:middle" title="Criar nova fonte">+ nova</button></label><select id="fFt"><option value="">Selecione...</option>'  +fontes.filter(f=>f.ativo!==false).map(f=>'<option value="'+f.nome+'"'+(f.nome===r.fonte?' selected':'')+'>'+f.nome+'</option>').join('')  +'</select></div><div class="fg"><label>Negativado em</label><select id="fEl"><option value="">Selecione...</option>'
   +['Serasa','SCPC','Serasa e SCPC','Boa Vista','Serasa, SCPC e Boa Vista'].map(a=>'<option'+(a===r.elegibilidade?' selected':'')+'>'+a+'</option>').join('')
   +'</select></div></div>'
   +'<div class="fg-2"><div class="fg"><label>Credor</label><input id="fCred" value="'+(r.credor||'')+'" placeholder="Ex: Banco Itaú"></div>'
@@ -2954,6 +2964,8 @@ function openNew(){
   document.getElementById('drTtl').textContent=curV==='negocios'?'Criar Negócio':'Novo Lead';
   document.getElementById('drTabs').style.display='none';
   document.getElementById('drFoot').style.display='flex';
+  // Garante fontes carregadas antes de montar o form
+  if(!fontes.length){ fontes=FONTES_PADRAO; syncFontesGlobais(); }
   document.getElementById('drBody').innerHTML=formHtml({});
   document.getElementById('drawer').classList.add('open');
   if(isAdmin()) populateRespSelect(null);
@@ -2965,6 +2977,8 @@ function openEdit(id){
   document.getElementById('drTtl').textContent='Editar — '+r.nome;
   document.getElementById('drTabs').style.display='none';
   document.getElementById('drFoot').style.display='flex';
+  // Garante fontes carregadas antes de montar o form
+  if(!fontes.length){ fontes=FONTES_PADRAO; syncFontesGlobais(); }
   document.getElementById('drBody').innerHTML=formHtml(r);
   document.getElementById('drawer').classList.add('open');
   if(isAdmin()) populateRespSelect(r.responsavel);
@@ -4358,13 +4372,11 @@ let fonteEmojiSel = '📱';
 let fonteCorSel = '#3B82F6';
 
 const FONTES_PADRAO = [
-  {id:'f1',nome:'Meta ADS Whatsapp',descricao:'Anúncios no Meta direcionados ao WhatsApp',icone:'whatsapp',cor:'#3B82F6',ativo:true},
-  {id:'f2',nome:'Instagram',descricao:'Mensagens diretas e stories no Instagram',icone:'instagram',cor:'#EC4899',ativo:true},
-  {id:'f3',nome:'SDR WhatsApp',descricao:'Prospecção ativa via WhatsApp pelo SDR',icone:'sdr',cor:'#27AE60',ativo:true},
-  {id:'f4',nome:'Meta Ads',descricao:'Campanhas de anúncios no Facebook/Instagram',icone:'ads',cor:'#D4AF37',ativo:true},
-  {id:'f5',nome:'Campanha Ademir',descricao:'Campanha gerenciada por Ademir',icone:'target',cor:'#8B5CF6',ativo:true},
-  {id:'f6',nome:'Indicação',descricao:'Cliente indicado por parceiro ou cliente',icone:'handshake',cor:'#00B4A2',ativo:true},
-  {id:'f7',nome:'Google Ads',descricao:'Anúncios no Google Search e Display',icone:'globe',cor:'#E67E22',ativo:true},
+  {id:'f1',nome:'Trafego Pago',descricao:'Leads gerados por anúncios pagos (Meta Ads, Google Ads)',icone:'ads',cor:'#3B82F6',ativo:true},
+  {id:'f2',nome:'Instagram',descricao:'Leads vindos pelo Instagram (DM, stories, bio)',icone:'instagram',cor:'#EC4899',ativo:true},
+  {id:'f3',nome:'Facebook',descricao:'Leads vindos pelo Facebook (grupos, página, Messenger)',icone:'people',cor:'#1877F2',ativo:true},
+  {id:'f4',nome:'Indicação',descricao:'Cliente indicado por parceiro, cliente ou colaborador',icone:'handshake',cor:'#00B4A2',ativo:true},
+  {id:'f5',nome:'Influenciador',descricao:'Leads gerados por parceria com influenciadores',icone:'star',cor:'#8B5CF6',ativo:true},
 ];
 
 // Biblioteca de ícones SVG para fontes
@@ -4435,38 +4447,32 @@ function syncFontesGlobais(){
   try{ localStorage.setItem('jh_fontes_bkp', JSON.stringify(fontes)); }catch(e){}
 }
 
+// Abre modal de nova fonte a partir do formulário de lead
+function abrirModalNovaFonte(){
+  editFonteId = null;
+  fonteEmojiSel = 'ads'; fonteCorSel = '#3B82F6';
+  document.getElementById('fonteModalTtl').textContent = 'Nova Fonte de Lead';
+  document.getElementById('fnNome').value = '';
+  document.getElementById('fnDesc').value = '';
+  document.getElementById('fnEmoji').value = 'ads';
+  document.getElementById('fnCor').value = '#3B82F6';
+  document.getElementById('fonteErr').textContent = '';
+  document.querySelectorAll('.icone-opt').forEach(b=>{ b.style.borderColor='var(--border)'; b.style.color='var(--textmid)'; b.style.background='var(--bg3)'; });
+  bpAfterSaveFonte = true;
+  document.getElementById('modalFonte').classList.add('open');
+}
+let bpAfterSaveFonte = false;
+
 async function testarTabelaFontes(){
   const status = document.getElementById('fontesDbStatus');
   try{
     await sb('GET','fontes?limit=1');
     if(status){ status.textContent='✅ Tabela OK'; status.style.color='var(--green2)'; }
-    return true;
   }catch(e){
-    const msg=(e.message||'').toLowerCase();
-    if(msg.includes('does not exist')||msg.includes('relation')||msg.includes('42p01')){
-      if(status){
-        status.innerHTML='❌ Tabela não existe — <a href="https://supabase.com/dashboard" target="_blank" style="color:var(--red2);text-decoration:underline">Execute o SQL no Supabase</a>';
-        status.style.color='var(--red2)';
-      }
-      // Copia SQL para clipboard automaticamente
-      const sql = `CREATE TABLE IF NOT EXISTS fontes (
-  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  nome text NOT NULL UNIQUE,
-  descricao text,
-  icone text DEFAULT 'default',
-  cor text DEFAULT '#3B82F6',
-  ativo boolean DEFAULT true,
-  created_at timestamptz DEFAULT now()
-);
-ALTER TABLE fontes ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "pub_f" ON fontes FOR ALL USING (true) WITH CHECK (true);`;
-      try{ await navigator.clipboard.writeText(sql); toast('SQL copiado! Cole no Supabase SQL Editor','inf'); }catch(e){}
-      return false;
-    }
     if(status){ status.textContent='⚠️ '+e.message; status.style.color='var(--gold2)'; }
-    return false;
   }
 }
+
 
 
 function renderFontes(){
@@ -4607,6 +4613,17 @@ async function salvarFonte(){
   renderFontes();
   syncSelFontes();
   toast(editFonteId?'Fonte atualizada!':'Fonte criada!','ok');
+  // Se foi aberto a partir do formulário de lead, seleciona a nova fonte no select
+  if(bpAfterSaveFonte){
+    bpAfterSaveFonte = false;
+    const fFtEl = document.getElementById('fFt');
+    if(fFtEl){
+      // Reconstrói as opções do select de fonte no form
+      const lista = fontes.filter(f=>f.ativo!==false);
+      fFtEl.innerHTML = '<option value="">Selecione...</option>'
+        + lista.map(f=>'<option value="'+f.nome+'"'+(f.nome===payload.nome?' selected':'')+'>'+f.nome+'</option>').join('');
+    }
+  }
 
   // Tenta sincronizar com Supabase em background (não bloqueia)
   try{
