@@ -1920,7 +1920,7 @@ function doLogin(){
   })();
 }
 
-function onLogin(user){
+async function onLogin(user){
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('loginBtn').textContent='Entrar';
   document.getElementById('loginBtn').disabled=false;
@@ -1931,8 +1931,7 @@ function onLogin(user){
   document.getElementById('sbUname').textContent=name;
   document.getElementById('sbUrole').textContent=user.role||'Assessoria Jurídica';
   addAccessLog('login','Login realizado');
-  loadResps();
-  loadProdutos();
+
   // Migra fontes antigas para as novas se necessário
   const fontesLocal = localStorage.getItem('jh_fontes');
   if(fontesLocal){
@@ -1943,7 +1942,12 @@ function onLogin(user){
       if(temAntigo){ localStorage.removeItem('jh_fontes'); }
     }catch(e){}
   }
-  loadFontes();
+
+  // Carrega fontes ANTES de tudo (await garante que estão prontas para o formHtml)
+  await loadFontes();
+
+  loadResps();
+  loadProdutos();
   loadDespesas();
   loadData();
 }
@@ -1969,6 +1973,9 @@ function renderAll(){
   const recsVis = getRecsVisiveis();
   // Gera notificações
   gerarNotificacoes();
+  // Garante fontes nos selects antes de renderizar
+  if(!fontes.length){ fontes=FONTES_PADRAO; syncFontesGlobais(); }
+  syncSelFontes();
   renderDash();renderTbl();renderKb();updBadges();
   renderAgenda();renderParados();
   if(curV==='meta')renderMeta();
@@ -4448,36 +4455,40 @@ const FONTE_ICONES = {
 function getFonteIco(f){ return FONTE_ICONES[f?.icone||f?.emoji]||FONTE_ICONES.default; }
 
 async function loadFontes(){
-  // 1. Primeiro carrega do localStorage (instantâneo, sempre disponível)
+  // 1. Carrega do localStorage IMEDIATAMENTE e sincroniza
   const local = localStorage.getItem('jh_fontes');
   if(local){
     try{
       const parsed = JSON.parse(local);
-      if(Array.isArray(parsed)) fontes = parsed;
+      if(Array.isArray(parsed) && parsed.length > 0){
+        fontes = parsed;
+        syncFontesGlobais(); // sincroniza na hora — não espera o banco
+      }
     }catch(e){}
   }
 
-  // 2. Tenta sincronizar com Supabase em background
+  // 2. Se ainda vazio (sem localStorage), usa padrão imediatamente
+  if(!fontes.length){
+    fontes = FONTES_PADRAO;
+    localStorage.setItem('jh_fontes', JSON.stringify(fontes));
+    syncFontesGlobais();
+  }
+
+  // 3. Tenta sincronizar com Supabase em background (não bloqueia)
   try{
     const data = await sb('GET','fontes?order=created_at.asc');
     if(Array.isArray(data) && data.length > 0){
-      // Banco tem dados — usa banco e atualiza local
       fontes = data;
       localStorage.setItem('jh_fontes', JSON.stringify(fontes));
-    } else if(Array.isArray(data) && data.length === 0 && fontes.length > 0){
-      // Banco vazio mas local tem dados — sincroniza banco com local
-      for(const f of fontes){
-        if(!f.id || f.id.startsWith('f')) continue; // skip IDs temporários
-        try{ await sb('POST','fontes',f); }catch(e){}
+      syncFontesGlobais();
+    } else if(Array.isArray(data) && data.length === 0){
+      // Banco vazio — sobe as fontes locais para o banco
+      for(const f of fontes.filter(x=>x.id)){
+        try{ await sb('POST','fontes',{nome:f.nome,descricao:f.descricao||'',icone:f.icone||'default',cor:f.cor||'#3B82F6',ativo:true}); }catch(e){}
       }
-    } else if(!Array.isArray(data) && !fontes.length){
-      fontes = FONTES_PADRAO;
-      localStorage.setItem('jh_fontes', JSON.stringify(fontes));
     }
   }catch(e){
-    // Failed to fetch ou outro erro — usa o que já carregou do localStorage
-    if(!fontes.length) fontes = FONTES_PADRAO;
-    console.warn('Supabase offline, usando localStorage:', e.message);
+    console.warn('Supabase offline, fontes via localStorage:', e.message);
   }
   syncFontesGlobais();
 }
